@@ -23,8 +23,27 @@
             }
         }
     </script>
+    <style>
+        /* CSS Print Rules to cleanly switch views during print execution */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #print-production-layer, #print-production-layer * {
+                visibility: visible;
+            }
+            #print-production-layer {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 <body class="bg-darkBg text-white font-sans min-h-screen p-4 flex flex-col items-center justify-start relative">
+
+    <div id="print-production-layer" class="hidden"></div>
 
     <div id="appContainer" class="w-full max-w-md bg-darkBg flex flex-col gap-6 pb-12">
         
@@ -54,7 +73,7 @@
             <div class="bg-cardBg rounded-2xl p-4 shadow-lg">
                 <h2 class="text-lg font-semibold text-gray-200 mb-3">Stock Summary</h2>
                 <div class="w-full text-center text-sm">
-                    <div id="matrixHeader" class="grid text-gray-400 border-b border-gray-800 pb-2 mb-2 font-medium"></div>
+                    <div id="matrixHeader" class="grid grid-cols-5 text-gray-400 border-b border-gray-800 pb-2 mb-2 font-medium"></div>
                     <div id="summaryRows" class="flex flex-col gap-3 pt-1"></div>
                 </div>
                 <p class="text-center text-xs text-gray-500 italic mt-6">Stock - Posted + Return = Left</p>
@@ -112,11 +131,8 @@
                         <input type="number" id="labelProductQty" value="1" min="1" class="w-full bg-innerCardBg border border-gray-800 rounded-xl p-3 text-center text-white focus:outline-none">
                     </div>
                     <div>
-                        <label class="block text-xs text-gray-400 mb-1">Label (PDF or Image)</label>
-                        <label class="w-full bg-innerCardBg border border-dashed border-gray-700 rounded-xl p-3 flex justify-center items-center cursor-pointer text-xs text-gray-400 hover:border-gray-500">
-                            <span id="uploadPromptText">Upload Document</span>
-                            <input type="file" id="labelFileInput" accept="image/*,application/pdf" class="hidden" onchange="handleFileSelectedName(this)">
-                        </label>
+                        <label class="block text-xs text-gray-400 mb-1">Label Document (PDF/Image)</label>
+                        <input type="file" id="labelFileInput" accept="image/*,application/pdf" class="w-full bg-innerCardBg border border-gray-800 rounded-xl p-2 text-xs text-white focus:outline-none" onchange="handleFileSelectedName(this)">
                         <p id="fileNameFeedback" class="text-[10px] text-green-400 mt-1 truncate text-center font-medium"></p>
                     </div>
                 </div>
@@ -144,13 +160,14 @@
                 <button onclick="closeLabelPreviewModal()" class="text-xs bg-gray-800 hover:bg-gray-700 text-gray-400 px-2 py-1 rounded-md transition">✕ Close</button>
             </div>
             <div class="w-full max-h-[60vh] bg-white rounded-xl overflow-y-auto p-2 flex justify-center items-center border border-gray-900">
-                <img id="modalPreviewImg" src="" class="w-full h-auto object-contain max-h-[55vh]">
+                <div id="modalPreviewContainer" class="w-full flex justify-center items-center"></div>
             </div>
             <div id="modalFooterContainer" class="grid grid-cols-2 gap-3 mt-1"></div>
         </div>
     </div>
 
     <script>
+        // System Databases Init Setup
         const defaultProducts = [
             { id: 'smb7', label: 'SMB7' },
             { id: 'e600', label: 'E600' },
@@ -166,6 +183,7 @@
         let isEditing = false;
         let editingId = null;
         let activeGlobalScreen = 'stock-view'; 
+        let base64FileBuffer = ""; 
 
         window.onload = function() {
             const today = new Date().toISOString().split('T')[0];
@@ -205,6 +223,7 @@
             refreshAllAppLayers();
         }
 
+        // Product Catalog Profile Core Methods
         function renderProductsList() {
             const container = document.getElementById('productsContainer');
             if(!container) return;
@@ -260,6 +279,7 @@
             });
         }
 
+        // Calculation Engines Matrix
         function getItemLeftCount(productId) {
             const totalStock = database.stock.reduce((sum, item) => sum + (parseInt(item[productId]) || 0), 0);
             const totalPostage = database.postage.reduce((sum, item) => sum + (parseInt(item[productId]) || 0), 0);
@@ -272,7 +292,6 @@
             const header = document.getElementById('matrixHeader');
             const summaryRows = document.getElementById('summaryRows');
             if(!header || !summaryRows) return;
-            header.className = "grid grid-cols-5 text-gray-400 border-b border-gray-800 pb-2 mb-2 font-medium";
             header.innerHTML = `
                 <div class="text-left pl-2">Product</div><div class="text-stockBlue">Stock</div>
                 <div class="text-postOrange">Posted</div><div class="text-returnPurple">Return</div><div class="text-right pr-2">Left</div>
@@ -300,6 +319,7 @@
             });
         }
 
+        // Entry Registry Log Form Engines
         function generateFormFields() {
             const container = document.getElementById('formInputsContainer');
             if(!container) return;
@@ -346,9 +366,7 @@
             renderLogs();
         }
 
-        let base64FileBuffer = ""; 
-
-        // Refactored file processor to dynamically handle either image strings or PDF attachments natively
+        // Upload and Media Buffer Pipelines
         function handleFileSelectedName(inputElement) {
             const feedback = document.getElementById('fileNameFeedback');
             const submitBtn = document.getElementById('queueLabelBtn');
@@ -376,20 +394,20 @@
         function addNewLabelToRegistry() {
             const productSelect = document.getElementById('labelProductSelect').value;
             const quantityInput = parseInt(document.getElementById('labelProductQty').value) || 1;
-            const todayISO = new Date().toISOString().split('T')[0];
+            const targetDate = document.getElementById('labelFilterDate').value;
 
             if(!productSelect) {
                 alert("Please add or select a product variant first.");
                 return;
             }
             if(!base64FileBuffer) {
-                alert("Please click the 'Upload Document' block and select your file first.");
+                alert("Please select a file via the input line field first.");
                 return;
             }
 
             const labelRecord = {
                 id: Date.now(),
-                date: todayISO, 
+                date: targetDate, 
                 productId: productSelect,
                 qty: quantityInput,
                 fileData: base64FileBuffer,
@@ -404,10 +422,10 @@
             document.getElementById('labelProductQty').value = "1";
             base64FileBuffer = "";
 
-            document.getElementById('labelFilterDate').value = todayISO;
             renderLabelsHubTimeline();
         }
 
+        // Ledger UI Component Renderer
         function renderLabelsHubTimeline() {
             const timeline = document.getElementById('labelsTimelineContainer');
             if(!timeline) return;
@@ -478,18 +496,19 @@
             });
         }
 
+        // Screen Modal Operations Layer
         function openLabelPreviewModal(id) {
             const label = labelsDatabase.find(l => l.id === id);
             if(!label) return;
 
             const modal = document.getElementById('previewModal');
-            const previewContainer = document.getElementById('modalPreviewImg').parentElement;
+            const previewContainer = document.getElementById('modalPreviewContainer');
             const footerContainer = document.getElementById('modalFooterContainer');
 
             let isPDF = label.fileData.startsWith("data:application/pdf");
             previewContainer.innerHTML = isPDF
                 ? `<embed src="${label.fileData}" type="application/pdf" class="w-full h-[55vh]">`
-                : `<img id="modalPreviewImg" src="${label.fileData}" class="w-full h-auto object-contain max-h-[55vh]">`;
+                : `<img src="${label.fileData}" class="w-full h-auto object-contain max-h-[55vh]">`;
 
             if(label.isPrinted) {
                 footerContainer.innerHTML = `
@@ -520,78 +539,70 @@
             document.getElementById('previewModal').classList.add('hidden');
         }
 
+        // 100% Secure Synchronous Multi-browser Print Execution Strategy
         function triggerPrintAndPostAction(id) {
             const label = labelsDatabase.find(l => l.id === id);
             if(!label || label.isPrinted) return;
 
             const productInfo = products.find(p => p.id === label.productId) || { label: 'Unknown Item' };
-
-            const printWindow = window.open('', '_blank');
-            if(!printWindow) {
-                alert("Please look at your address bar and allow popups for this page to process printing documents successfully!");
-                return;
-            }
-
+            const printLayer = document.getElementById('print-production-layer');
+            
             let isPDF = label.fileData.startsWith("data:application/pdf");
-            let printElement = isPDF
-                ? `<embed src="${label.fileData}" type="application/pdf" style="width:100%; height:90vh;">`
-                : `<img id="labelImg" src="${label.fileData}" style="max-width:100%; height:auto;" />`;
+            let assetHtml = isPDF
+                ? `<embed src="${label.fileData}" type="application/pdf" style="width:100%; height:95vh;">`
+                : `<img src="${label.fileData}" style="max-width:100%; max-height:92vh; display:block; margin:20px auto; object-fit:contain;" />`;
 
-            printWindow.document.open();
-            printWindow.document.write(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>ITEM: ${productInfo.label}</title>
-                    <style>
-                        html, body { margin: 0; padding: 0; background: #fff; color: #000; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-                        .header-tag {
-                            font-size: 24px;
-                            font-weight: 800;
-                            text-align: center;
-                            text-transform: uppercase;
-                            padding: 10px;
-                            margin-bottom: 15px;
-                            border: 3px solid #000;
-                            letter-spacing: 0.5px;
-                        }
-                        .img-wrap { width: 100%; display: flex; justify-content: center; }
-                        @page { margin: 6mm; }
-                    </style>
-                </head>
-                <body>
-                    <div class="header-tag">ITEM: ${productInfo.label}</div>
-                    <div class="img-wrap">
-                        ${printElement}
+            // Clear old buffer content and inject current target media layout
+            printLayer.innerHTML = `
+                <div style="background:#ffffff; color:#000000; padding:20px; font-family:sans-serif; min-height:100vh; box-sizing:border-box;">
+                    <div style="font-size:16px; font-weight:bold; text-transform:uppercase; margin-bottom:15px; border-b:3px dashed #000000; padding-bottom:8px; letter-spacing:1px;">
+                        Product Dispatch Profile: ${productInfo.label}
                     </div>
-                    <script>
-                        window.onload = function() {
-                            setTimeout(() => {
-                                window.focus();
-                                window.print();
-                                setTimeout(() => { window.close(); }, 500);
-                            }, 400);
-                        };
-                    <\/script>
-                </body>
-                </html>
-            `);
-            printWindow.document.close();
+                    <div style="width:100%; display:flex; justify-content:center; align-items:center;">
+                        ${assetHtml}
+                    </div>
+                </div>
+            `;
 
-            let autoPostageRow = {
-                id: Date.now() + 1,
-                date: label.date
+            // Open printing layout channel 
+            printLayer.classList.remove('hidden');
+
+            // Setup a media query listener to see exactly when the print setup dialogue closes
+            const printCompletionWatcher = window.matchMedia('print');
+            
+            const postPrintDatabaseExecution = function(e) {
+                if (!e.matches) { 
+                    // This runs right after the dialog closes (printed or cancelled)
+                    printLayer.innerHTML = "";
+                    printLayer.classList.add('hidden');
+
+                    // Process and inject the ledger row tracking details
+                    let autoPostageRow = {
+                        id: Date.now() + 1,
+                        date: label.date
+                    };
+
+                    products.forEach(p => {
+                        autoPostageRow[p.id] = (p.id === label.productId) ? label.qty : 0;
+                    });
+
+                    database.postage.unshift(autoPostageRow);
+                    label.isPrinted = true;
+                    
+                    saveDataToDevice();
+                    refreshAllAppLayers();
+
+                    // Clean out listener allocations to prevent duplicate memory leaks
+                    printCompletionWatcher.removeListener(postPrintDatabaseExecution);
+                }
             };
 
-            products.forEach(p => {
-                autoPostageRow[p.id] = (p.id === label.productId) ? label.qty : 0;
-            });
+            printCompletionWatcher.addListener(postPrintDatabaseExecution);
 
-            database.postage.unshift(autoPostageRow);
-            label.isPrinted = true;
-            
-            saveDataToDevice();
-            refreshAllAppLayers();
+            // Give the DOM 450ms to verify that the base64 graphics layout is fully rendered before launching window.print
+            setTimeout(() => {
+                window.print();
+            }, 450);
         }
 
         function removeLabelRecord(id) {
@@ -612,6 +623,7 @@
             refreshAllAppLayers();
         }
 
+        // Ledger Entry Logs Logic Renderer
         function renderLogs() {
             const container = document.getElementById('logContainer');
             if(!container) return;
