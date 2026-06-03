@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stock & Label Manager</title>
+    <title>AR Stock & Label Manager</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -24,7 +24,6 @@
         }
     </script>
     <style>
-        /* CSS Print Rules to cleanly switch views during print execution */
         @media print {
             body * {
                 visibility: hidden;
@@ -45,109 +44,184 @@
 
     <div id="print-production-layer" class="hidden"></div>
 
-    <div id="appContainer" class="w-full max-w-md bg-darkBg flex flex-col gap-6 pb-12">
+    <div id="loginScreenView" class="w-full max-w-md bg-cardBg rounded-2xl p-6 shadow-2xl my-auto flex flex-col gap-5 border border-gray-800">
+        <div class="text-center flex flex-col items-center gap-2">
+            <div class="bg-stockBlue/10 p-3 rounded-full text-stockBlue">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                </svg>
+            </div>
+            <h2 class="text-xl font-bold tracking-wide">System Access Locked</h2>
+            <p class="text-xs text-gray-400">Please provide authentication code token verification</p>
+        </div>
+        <div>
+            <label class="block text-xs text-gray-400 mb-1">Passcode PIN</label>
+            <input type="password" id="sysPasswordInput" placeholder="••••" class="w-full bg-innerCardBg border border-gray-800 rounded-xl p-3 text-center text-xl text-white focus:outline-none tracking-widest">
+            <p id="loginErrorMsg" class="text-xs text-leftRed hidden text-center mt-2 font-medium">⚠️ Invalid passcode entered.</p>
+        </div>
+        <button onclick="validateAppAccessPassword()" class="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-xl font-semibold tracking-wide transition shadow-lg text-sm">
+            Unlock Application Terminal
+        </button>
+    </div>
+
+    <div id="appContainer" class="hidden w-full max-w-md bg-darkBg flex flex-col gap-6 pb-12">
         
         <div class="flex items-center justify-between pt-4 px-2">
             <div class="flex items-center gap-3">
                 <svg class="w-8 h-8 text-stockBlue" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m-8-14l8 4m-8-4v10l8 4m0-10v10"></path>
                 </svg>
-                <h1 class="text-2xl font-bold tracking-wide">Stock Pro</h1>
+                <h1 class="text-2xl font-bold tracking-wide">AR Stock Manager</h1>
             </div>
-            <button id="viewToggleBtn" onclick="toggleGlobalView()" class="bg-blue-600 text-xs px-3 py-2 rounded-xl font-semibold shadow hover:bg-blue-700 transition">
-                Go to Label Hub
-            </button>
+            <div class="flex items-center gap-1.5">
+                <button id="viewToggleBtn" onclick="toggleGlobalView()" class="bg-blue-600 text-[11px] px-2.5 py-2 rounded-xl font-semibold shadow hover:bg-blue-700 transition">
+                    Go to Label Hub
+                </button>
+                <button onclick="logoutSecurely()" class="bg-gray-800 hover:bg-gray-700 text-gray-400 p-2 rounded-xl text-xs" title="Logout">
+                    ✕
+                </button>
+            </div>
         </div>
 
-        <div id="stockManagementView" class="flex flex-col gap-6">
-            <div class="bg-cardBg rounded-2xl p-4 shadow-lg">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-lg font-semibold text-gray-200">Products</h2>
-                    <button onclick="createNewProduct()" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-lg text-sm font-medium transition">
-                        + Add
-                    </button>
-                </div>
-                <div id="productsContainer" class="flex flex-col gap-2"></div>
-            </div>
-
-            <div class="bg-cardBg rounded-2xl p-4 shadow-lg">
-                <h2 class="text-lg font-semibold text-gray-200 mb-3">Stock Summary</h2>
-                <div class="w-full text-center text-sm">
-                    <div id="matrixHeader" class="grid grid-cols-5 text-gray-400 border-b border-gray-800 pb-2 mb-2 font-medium"></div>
-                    <div id="summaryRows" class="flex flex-col gap-3 pt-1"></div>
-                </div>
-                <p class="text-center text-xs text-gray-500 italic mt-6">Stock - Posted + Return = Left</p>
-            </div>
-
-            <button onclick="switchTab('stock')" class="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-xl font-semibold tracking-wide transition shadow-lg">
-                Open Entry Registers
-            </button>
+        <div class="grid grid-cols-2 gap-2 px-1">
+            <button id="navBtn-dashboard" onclick="switchGlobalAppModule('dashboard')" class="py-2 rounded-xl text-xs font-semibold bg-innerCardBg border border-gray-800 text-stockBlue">Dashboard Inventory</button>
+            <button id="navBtn-reports" onclick="switchGlobalAppModule('reports')" class="py-2 rounded-xl text-xs font-semibold bg-innerCardBg border border-gray-800 text-gray-400">Comprehensive Reports</button>
         </div>
 
-        <div id="entryScreen" class="hidden flex flex-col gap-6">
-            <div class="grid grid-cols-3 bg-innerCardBg p-1 rounded-xl border border-gray-800">
-                <button id="tab-stock" onclick="if(!isEditing) switchTab('stock')" class="py-2 rounded-lg font-medium text-sm flex justify-center items-center gap-1">⊕ Stock</button>
-                <button id="tab-postage" onclick="if(!isEditing) switchTab('postage')" class="py-2 rounded-lg font-medium text-sm flex justify-center items-center gap-1">➢ Postage</button>
-                <button id="tab-return" onclick="if(!isEditing) switchTab('return')" class="py-2 rounded-lg font-medium text-sm flex justify-center items-center gap-1">⮌ Return</button>
-            </div>
-
-            <div class="bg-cardBg rounded-2xl p-5 shadow-lg">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 id="formTitle" class="text-xl font-bold">Add Entry</h2>
-                    <button id="cancelEditBtn" onclick="cancelEditingMode()" class="hidden text-xs bg-gray-700 px-2 py-1 rounded text-gray-300">Cancel Edit</button>
-                </div>
-                <div class="flex flex-col gap-4">
-                    <div>
-                        <label class="block text-xs text-gray-400 mb-1">Date</label>
-                        <input type="date" id="formDate" class="w-full bg-innerCardBg border border-gray-800 rounded-xl p-3 text-white focus:outline-none">
+        <div id="coreDashboardModuleBlock" class="flex flex-col gap-6">
+            <div id="stockManagementView" class="flex flex-col gap-6">
+                <div class="bg-cardBg rounded-2xl p-4 shadow-lg">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-semibold text-gray-200">Products Profile</h2>
+                        <button onclick="createNewProduct()" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-lg text-sm font-medium transition">
+                            + Add
+                        </button>
                     </div>
-                    <div id="formInputsContainer" class="grid grid-cols-2 gap-4"></div>
-                    <button id="formSubmitBtn" onclick="submitEntry()" class="w-full py-3 rounded-xl font-semibold text-white mt-2">Add Entry</button>
-                </div>
-            </div>
-
-            <div class="flex flex-col gap-4">
-                <h3 id="logTitle" class="text-lg font-semibold px-1">Entries</h3>
-                <div id="logContainer" class="flex flex-col gap-3"></div>
-            </div>
-
-            <button onclick="showDashboardView()" id="backBtn" class="w-full bg-gray-800 py-3 rounded-xl font-semibold tracking-wide text-gray-300">
-                ← Back to Stock Matrix
-            </button>
-        </div>
-
-        <div id="labelHubView" class="hidden flex flex-col gap-6">
-            <div class="bg-cardBg rounded-2xl p-5 shadow-lg flex flex-col gap-4">
-                <h2 class="text-xl font-bold tracking-wide text-postOrange">Upload Print Label</h2>
-                
-                <div>
-                    <label class="block text-xs text-gray-400 mb-1">Select Target Product Item</label>
-                    <select id="labelProductSelect" class="w-full bg-innerCardBg border border-gray-800 rounded-xl p-3 text-white focus:outline-none"></select>
+                    <div id="productsContainer" class="flex flex-col gap-2"></div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs text-gray-400 mb-1">Shipping Quantity</label>
-                        <input type="number" id="labelProductQty" value="1" min="1" class="w-full bg-innerCardBg border border-gray-800 rounded-xl p-3 text-center text-white focus:outline-none">
+                <div class="bg-cardBg rounded-2xl p-4 shadow-lg">
+                    <h2 class="text-lg font-semibold text-gray-200 mb-3">Stock Balance Matrix</h2>
+                    <div class="w-full text-center text-sm">
+                        <div id="matrixHeader" class="grid grid-cols-5 text-gray-400 border-b border-gray-800 pb-2 mb-2 font-medium"></div>
+                        <div id="summaryRows" class="flex flex-col gap-3 pt-1"></div>
                     </div>
-                    <div>
-                        <label class="block text-xs text-gray-400 mb-1">Label Document (PDF/Image)</label>
-                        <input type="file" id="labelFileInput" accept="image/*,application/pdf" class="w-full bg-innerCardBg border border-gray-800 rounded-xl p-2 text-xs text-white focus:outline-none" onchange="handleFileSelectedName(this)">
-                        <p id="fileNameFeedback" class="text-[10px] text-green-400 mt-1 truncate text-center font-medium"></p>
-                    </div>
+                    <p class="text-center text-xs text-gray-500 italic mt-6">Stock - Posted + Return = Left</p>
                 </div>
 
-                <button id="queueLabelBtn" onclick="addNewLabelToRegistry()" class="w-full bg-orange-500 hover:bg-orange-600 font-semibold py-3 rounded-xl shadow transition mt-2">
-                    Queue Label for Print
+                <button onclick="switchTab('stock')" class="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-xl font-semibold tracking-wide transition shadow-lg">
+                    Open Entry Registers
                 </button>
             </div>
 
-            <div class="flex flex-col gap-4">
-                <div class="flex justify-between items-center px-1">
-                    <h3 class="text-lg font-semibold text-gray-200">Daily Printing Ledger</h3>
-                    <input type="date" id="labelFilterDate" onchange="renderLabelsHubTimeline()" class="bg-cardBg text-xs p-2 rounded-lg border border-gray-800 text-white focus:outline-none">
+            <div id="entryScreen" class="hidden flex flex-col gap-6">
+                <div class="grid grid-cols-3 bg-innerCardBg p-1 rounded-xl border border-gray-800">
+                    <button id="tab-stock" onclick="if(!isEditing) switchTab('stock')" class="py-2 rounded-lg font-medium text-sm flex justify-center items-center gap-1">⊕ Stock</button>
+                    <button id="tab-postage" onclick="if(!isEditing) switchTab('postage')" class="py-2 rounded-lg font-medium text-sm flex justify-center items-center gap-1">➢ Postage</button>
+                    <button id="tab-return" onclick="if(!isEditing) switchTab('return')" class="py-2 rounded-lg font-medium text-sm flex justify-center items-center gap-1">⮌ Return</button>
                 </div>
-                <div id="labelsTimelineContainer" class="flex flex-col gap-3"></div>
+
+                <div class="bg-cardBg rounded-2xl p-5 shadow-lg">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 id="formTitle" class="text-xl font-bold">Add Entry</h2>
+                        <button id="cancelEditBtn" onclick="cancelEditingMode()" class="hidden text-xs bg-gray-700 px-2 py-1 rounded text-gray-300">Cancel Edit</button>
+                    </div>
+                    <div class="flex flex-col gap-4">
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Date</label>
+                            <input type="date" id="formDate" class="w-full bg-innerCardBg border border-gray-800 rounded-xl p-3 text-white focus:outline-none">
+                        </div>
+                        <div id="formInputsContainer" class="grid grid-cols-2 gap-4"></div>
+                        <button id="formSubmitBtn" onclick="submitEntry()" class="w-full py-3 rounded-xl font-semibold text-white mt-2">Add Entry</button>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-4">
+                    <h3 id="logTitle" class="text-lg font-semibold px-1">Entries</h3>
+                    <div id="logContainer" class="flex flex-col gap-3"></div>
+                </div>
+
+                <button onclick="showDashboardView()" id="backBtn" class="w-full bg-gray-800 py-3 rounded-xl font-semibold tracking-wide text-gray-300">
+                    ← Back to Stock Matrix
+                </button>
+            </div>
+
+            <div id="labelHubView" class="hidden flex flex-col gap-6">
+                <div class="bg-cardBg rounded-2xl p-5 shadow-lg flex flex-col gap-4">
+                    <h2 class="text-xl font-bold tracking-wide text-postOrange">Upload Print Label</h2>
+                    
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Select Target Product Item</label>
+                        <select id="labelProductSelect" class="w-full bg-innerCardBg border border-gray-800 rounded-xl p-3 text-white focus:outline-none"></select>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Shipping Quantity</label>
+                            <input type="number" id="labelProductQty" value="1" min="1" class="w-full bg-innerCardBg border border-gray-800 rounded-xl p-3 text-center text-white focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Label Document (PDF/Image)</label>
+                            <input type="file" id="labelFileInput" accept="image/*,application/pdf" class="w-full bg-innerCardBg border border-gray-800 rounded-xl p-2 text-xs text-white focus:outline-none" onchange="handleFileSelectedName(this)">
+                            <p id="fileNameFeedback" class="text-[10px] text-green-400 mt-1 truncate text-center font-medium"></p>
+                        </div>
+                    </div>
+
+                    <button id="queueLabelBtn" onclick="addNewLabelToRegistry()" class="w-full bg-orange-500 hover:bg-orange-600 font-semibold py-3 rounded-xl shadow transition mt-2">
+                        Queue Label for Print
+                    </button>
+                </div>
+
+                <div class="flex flex-col gap-4">
+                    <div class="flex justify-between items-center px-1">
+                        <h3 class="text-lg font-semibold text-gray-200">Daily Printing Ledger</h3>
+                        <input type="date" id="labelFilterDate" onchange="renderLabelsHubTimeline()" class="bg-cardBg text-xs p-2 rounded-lg border border-gray-800 text-white focus:outline-none">
+                    </div>
+                    <div id="labelsTimelineContainer" class="flex flex-col gap-3"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="reportsAppModuleBlock" class="hidden flex flex-col gap-6">
+            <div class="bg-cardBg rounded-2xl p-5 shadow-lg flex flex-col gap-4">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-xl font-bold tracking-wide text-gray-100">Audit Reports Engine</h2>
+                    <button onclick="printFilteredReportLayout()" class="bg-gray-800 text-xs px-3 py-1.5 rounded-lg border border-gray-700 hover:bg-gray-700 transition">
+                        🖨️ Export PDF
+                    </button>
+                </div>
+
+                <div class="flex flex-col gap-3 p-3 bg-innerCardBg rounded-xl border border-gray-800 text-xs">
+                    <div>
+                        <label class="block text-gray-400 mb-1 font-medium">Reports Range Scope Filter</label>
+                        <select id="reportScopeSelect" onchange="adjustReportFilterUiView()" class="w-full bg-cardBg border border-gray-800 rounded-lg p-2.5 text-white font-medium focus:outline-none">
+                            <option value="all">Lifetime Accumulated Metrics</option>
+                            <option value="month">Specific Calendar Month Summary</option>
+                            <option value="day">Single Calendar Day Breakdown</option>
+                        </select>
+                    </div>
+                    <div id="reportRangeDynamicContainer" class="hidden">
+                        <label id="rangeInputLabel" class="block text-gray-400 mb-1 font-medium">Select Parameter</label>
+                        <input type="month" id="reportScopeDateInput" onchange="generateCalculatedComprehensiveReport()" class="w-full bg-cardBg border border-gray-800 rounded-lg p-2.5 text-white font-medium focus:outline-none">
+                    </div>
+                </div>
+            </div>
+
+            <div id="reportTotalsOutputDisplay" class="grid grid-cols-2 gap-3"></div>
+            
+            <div class="bg-cardBg rounded-2xl p-4 shadow-lg overflow-x-auto">
+                <h3 class="text-sm font-semibold text-gray-400 mb-3 tracking-wider uppercase pl-1">Product Data Breakdown</h3>
+                <table class="w-full text-left text-xs border-collapse">
+                    <thead>
+                        <tr class="border-b border-gray-800 text-gray-400 font-medium">
+                            <th class="py-2 px-1">Date</th>
+                            <th class="py-2 px-1">Item Name</th>
+                            <th class="py-2 px-1 text-center">Posted</th>
+                            <th class="py-2 px-1 text-right">Left</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reportBreakdownContainer"></tbody>
+                </table>
             </div>
         </div>
 
@@ -184,12 +258,42 @@
         let editingId = null;
         let activeGlobalScreen = 'stock-view'; 
         let base64FileBuffer = ""; 
+        let currentActiveModule = 'dashboard';
 
         window.onload = function() {
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('formDate').value = today;
             document.getElementById('labelFilterDate').value = today;
+            document.getElementById('reportScopeDateInput').value = today.substring(0, 7); // Default to current month
+
+            if (sessionStorage.getItem('ar_authenticated') === 'true') {
+                document.getElementById('loginScreenView').classList.add('hidden');
+                document.getElementById('appContainer').classList.remove('hidden');
+            }
             refreshAllAppLayers();
+        }
+
+        function validateAppAccessPassword() {
+            const pinVal = document.getElementById('sysPasswordInput').value;
+            const errorFdbk = document.getElementById('loginErrorMsg');
+            
+            if (pinVal === '1234') {
+                errorFdbk.classList.add('hidden');
+                sessionStorage.setItem('ar_authenticated', 'true');
+                document.getElementById('loginScreenView').classList.add('hidden');
+                document.getElementById('appContainer').classList.remove('hidden');
+                refreshAllAppLayers();
+            } else {
+                errorFdbk.classList.remove('hidden');
+                document.getElementById('sysPasswordInput').value = "";
+            }
+        }
+
+        function logoutSecurely() {
+            sessionStorage.removeItem('ar_authenticated');
+            document.getElementById('appContainer').classList.add('hidden');
+            document.getElementById('loginScreenView').classList.remove('hidden');
+            document.getElementById('sysPasswordInput').value = "";
         }
 
         function saveDataToDevice() {
@@ -203,6 +307,26 @@
             calculateStockMatrix();
             populateLabelDropdown();
             renderLabelsHubTimeline();
+            generateCalculatedComprehensiveReport();
+        }
+
+        function switchGlobalAppModule(targetModule) {
+            currentActiveModule = targetModule;
+            const dashBtn = document.getElementById('navBtn-dashboard');
+            const rptBtn = document.getElementById('navBtn-reports');
+            
+            if(targetModule === 'dashboard') {
+                document.getElementById('coreDashboardModuleBlock').classList.remove('hidden');
+                document.getElementById('reportsAppModuleBlock').classList.add('hidden');
+                dashBtn.className = "py-2 rounded-xl text-xs font-semibold bg-innerCardBg border border-gray-800 text-stockBlue";
+                rptBtn.className = "py-2 rounded-xl text-xs font-semibold bg-innerCardBg border border-gray-800 text-gray-400";
+            } else {
+                document.getElementById('coreDashboardModuleBlock').classList.add('hidden');
+                document.getElementById('reportsAppModuleBlock').classList.remove('hidden');
+                dashBtn.className = "py-2 rounded-xl text-xs font-semibold bg-innerCardBg border border-gray-800 text-gray-400";
+                rptBtn.className = "py-2 rounded-xl text-xs font-semibold bg-innerCardBg border border-gray-800 text-stockBlue";
+                generateCalculatedComprehensiveReport();
+            }
         }
 
         function toggleGlobalView() {
@@ -223,7 +347,6 @@
             refreshAllAppLayers();
         }
 
-        // Product Catalog Profile Core Methods
         function renderProductsList() {
             const container = document.getElementById('productsContainer');
             if(!container) return;
@@ -279,7 +402,6 @@
             });
         }
 
-        // Calculation Engines Matrix
         function getItemLeftCount(productId) {
             const totalStock = database.stock.reduce((sum, item) => sum + (parseInt(item[productId]) || 0), 0);
             const totalPostage = database.postage.reduce((sum, item) => sum + (parseInt(item[productId]) || 0), 0);
@@ -319,400 +441,485 @@
             });
         }
 
-        // Entry Registry Log Form Engines
-        function generateFormFields() {
+        function adjustReportFilterUiView() {
+            const mode = document.getElementById('reportScopeSelect').value;
+            const wrapper = document.getElementById('reportRangeDynamicContainer');
+            const label = document.getElementById('rangeInputLabel');
+            const input = document.getElementById('reportScopeDateInput');
+
+            if(mode === 'all') {
+                wrapper.classList.add('hidden');
+            } else if(mode === 'month') {
+                wrapper.classList.remove('hidden');
+                label.innerText = "Select Calendar Month Target";
+                input.type = "month";
+                if(input.value.length > 7) input.value = input.value.substring(0, 7);
+            } else if(mode === 'day') {
+                wrapper.classList.remove('hidden');
+                label.innerText = "Select Single Day Calendar Target";
+                input.type = "date";
+                if(input.value.length === 7) input.value = input.value + "-01";
+            }
+            generateCalculatedComprehensiveReport();
+        }
+
+        function generateCalculatedComprehensiveReport() {
+            const mode = document.getElementById('reportScopeSelect').value;
+            const rawFilterVal = document.getElementById('reportScopeDateInput').value;
+
+            let stockPool = [...database.stock];
+            let postPool = [...database.postage];
+            let returnPool = [...database.return];
+
+            if(mode === 'month' && rawFilterVal) {
+                stockPool = stockPool.filter(i => i.date.substring(0, 7) === rawFilterVal);
+                postPool = postPool.filter(i => i.date.substring(0, 7) === rawFilterVal);
+                returnPool = returnPool.filter(i => i.date.substring(0, 7) === rawFilterVal);
+            } else if(mode === 'day' && rawFilterVal) {
+                stockPool = stockPool.filter(i => i.date === rawFilterVal);
+                postPool = postPool.filter(i => i.date === rawFilterVal);
+                returnPool = returnPool.filter(i => i.date === rawFilterVal);
+            }
+
+            let computedGlobalStock = 0;
+            let computedGlobalPost = 0;
+            let computedGlobalReturn = 0;
+
+            // Gather chronologically unified operational dates
+            let distinctDatesSet = new Set();
+            stockPool.forEach(i => distinctDatesSet.add(i.date));
+            postPool.forEach(i => distinctDatesSet.add(i.date));
+            returnPool.forEach(i => distinctDatesSet.add(i.date));
+            let sortedTimelineDates = Array.from(distinctDatesSet).sort();
+
+            // Total accumulators for standard summary display metrics
+            products.forEach(p => {
+                stockPool.forEach(row => { computedGlobalStock += (parseInt(row[p.id]) || 0); });
+                postPool.forEach(row => { computedGlobalPost += (parseInt(row[p.id]) || 0); });
+                returnPool.forEach(row => { computedGlobalReturn += (parseInt(row[p.id]) || 0); });
+            });
+
+            let globalNetLeft = computedGlobalStock - computedGlobalPost + computedGlobalReturn;
+
+            // Render Totals Info Blocks
+            const gridContainer = document.getElementById('reportTotalsOutputDisplay');
+            gridContainer.innerHTML = `
+                <div class="bg-cardBg p-3 rounded-xl border border-gray-800">
+                    <span class="block text-[10px] uppercase tracking-wider text-gray-400 font-medium">Stock Added</span>
+                    <strong class="text-xl text-stockBlue">${computedGlobalStock}</strong>
+                </div>
+                <div class="bg-cardBg p-3 rounded-xl border border-gray-800">
+                    <span class="block text-[10px] uppercase tracking-wider text-gray-400 font-medium">Units Posted</span>
+                    <strong class="text-xl text-postOrange">${computedGlobalPost}</strong>
+                </div>
+                <div class="bg-cardBg p-3 rounded-xl border border-gray-800">
+                    <span class="block text-[10px] uppercase tracking-wider text-gray-400 font-medium">Units Returned</span>
+                    <strong class="text-xl text-returnPurple">${computedGlobalReturn}</strong>
+                </div>
+                <div class="bg-cardBg p-3 rounded-xl border border-gray-800">
+                    <span class="block text-[10px] uppercase tracking-wider text-gray-400 font-medium">Period Margin Net</span>
+                    <strong class="text-xl ${globalNetLeft >= 0 ? 'text-leftGreen' : 'text-leftRed'}">${globalNetLeft}</strong>
+                </div>
+            `;
+
+            // Build Row Layouts organized by Date - Item Name - Posted - Left
+            const breakdownContainer = document.getElementById('reportBreakdownContainer');
+            breakdownContainer.innerHTML = '';
+
+            if (sortedTimelineDates.length === 0) {
+                breakdownContainer.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-500 italic">No entry logs match active parameters.</td></tr>`;
+                return;
+            }
+
+            sortedTimelineDates.forEach(date => {
+                products.forEach(p => {
+                    // Calculate totals on this specific date
+                    let dayStock = stockPool.filter(i => i.date === date).reduce((sum, item) => sum + (parseInt(item[p.id]) || 0), 0);
+                    let dayPost = postPool.filter(i => i.date === date).reduce((sum, item) => sum + (parseInt(item[p.id]) || 0), 0);
+                    let dayRet = returnPool.filter(i => i.date === date).reduce((sum, item) => sum + (parseInt(item[p.id]) || 0), 0);
+
+                    // Compute current running overall historical left value for specific profile balance metric layout
+                    let totalLeftVal = getItemLeftCount(p.id);
+
+                    // Show rows where an event occurred on that specific date
+                    if (dayStock > 0 || dayPost > 0 || dayRet > 0) {
+                        const tr = document.createElement('tr');
+                        tr.className = "border-b border-gray-900 hover:bg-innerCardBg/40 transition text-[11px] font-medium";
+                        tr.innerHTML = `
+                            <td class="py-2.5 px-1 text-gray-400">${date}</td>
+                            <td class="py-2.5 px-1 text-gray-200 font-semibold">${p.label}</td>
+                            <td class="py-2.5 px-1 text-center text-postOrange font-bold">${dayPost}</td>
+                            <td class="py-2.5 px-1 text-right text-leftGreen font-bold">${totalLeftVal}</td>
+                        `;
+                        breakdownContainer.appendChild(tr);
+                    }
+                });
+            });
+        }
+
+        function printFilteredReportLayout() {
+            const scopeText = document.getElementById('reportScopeSelect').options[document.getElementById('reportScopeSelect').selectedIndex].text;
+            const dataTotalsHtml = document.getElementById('reportTotalsOutputDisplay').innerHTML;
+            const tableRowsHtml = document.getElementById('reportBreakdownContainer').innerHTML;
+            const printLayer = document.getElementById('print-production-layer');
+
+            printLayer.innerHTML = `
+                <div style="background:#ffffff; color:#000000; padding:35px; font-family:sans-serif; min-height:100vh; box-sizing:border-box;">
+                    <div style="border-b:4px solid #0f1424; padding-bottom:12px; margin-bottom:25px;">
+                        <h1 style="font-size:26px; margin:0; font-weight:800; color:#0f1424; text-transform:uppercase;">AR Stock Management Audit Report</h1>
+                        <p style="font-size:13px; color:#555555; margin:4px 0 0 0; font-weight:500;">Scope Window: <strong>${scopeText}</strong></p>
+                    </div>
+                    
+                    <div style="margin-bottom:30px; display:grid; grid-template-cols: repeat(2, 1fr); gap:15px;">
+                        ${dataTotalsHtml}
+                    </div>
+
+                    <h2 style="font-size:16px; font-weight:700; margin-bottom:12px; color:#0f1424; border-bottom:2px solid #eee; padding-bottom:6px;">Product Data Flow Ledger</h2>
+                    <table style="width:100%; border-collapse:collapse; font-size:12px; text-align:left;">
+                        <thead>
+                            <tr style="border-b:2px solid #000; color:#444; font-weight:bold;">
+                                <th style="padding:8px 4px;">Date</th>
+                                <th style="padding:8px 4px;">Item Name</th>
+                                <th style="padding:8px 4px; text-align:center;">Posted</th>
+                                <th style="padding:8px 4px; text-align:right;">Left</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tableRowsHtml}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            window.print();
+        }
+
+        // Standard Entry Forms & Tab Systems Core Methods
+        function switchTab(targetTab) {
+            currentActiveTab = targetTab;
+            const tabs = ['stock', 'postage', 'return'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`tab-${t}`);
+                if(t === targetTab) {
+                    btn.className = "py-2 rounded-lg font-medium text-sm flex justify-center items-center gap-1 bg-cardBg text-white shadow";
+                } else {
+                    btn.className = "py-2 rounded-lg font-medium text-sm flex justify-center items-center gap-1 text-gray-400 hover:text-white";
+                }
+            });
+
+            const title = document.getElementById('formTitle');
+            const submitBtn = document.getElementById('formSubmitBtn');
+            
+            if(targetTab === 'stock') {
+                title.innerText = isEditing ? "Modify Stock Entry" : "Add Stock Entry";
+                submitBtn.className = "w-full py-3 rounded-xl font-semibold text-white mt-2 bg-stockBlue hover:bg-blue-600";
+                submitBtn.innerText = isEditing ? "Save Entry Changes" : "Register Stock Input";
+            } else if(targetTab === 'postage') {
+                title.innerText = isEditing ? "Modify Postage Entry" : "Add Postage Entry";
+                submitBtn.className = "w-full py-3 rounded-xl font-semibold text-white mt-2 bg-postOrange hover:bg-orange-600";
+                submitBtn.innerText = isEditing ? "Save Entry Changes" : "Register Postage Outflow";
+            } else if(targetTab === 'return') {
+                title.innerText = isEditing ? "Modify Return Entry" : "Add Return Entry";
+                submitBtn.className = "w-full py-3 rounded-xl font-semibold text-white mt-2 bg-returnPurple hover:bg-purple-600";
+                submitBtn.innerText = isEditing ? "Save Entry Changes" : "Register Returned Item";
+            }
+            renderFormFieldsInputs();
+            renderActiveHistoryLogs();
+        }
+
+        function renderFormFieldsInputs() {
             const container = document.getElementById('formInputsContainer');
             if(!container) return;
             container.innerHTML = '';
-            products.forEach(prod => {
-                container.innerHTML += `
-                    <div>
-                        <label class="block text-xs text-gray-400 mb-1 truncate">${prod.label}</label>
-                        <input type="number" id="input-${prod.id}" value="0" min="0" class="w-full bg-innerCardBg border border-gray-800 rounded-xl p-3 text-center text-white focus:outline-none">
+            
+            products.forEach(p => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = "bg-innerCardBg p-2.5 rounded-xl border border-gray-800 flex flex-col items-center justify-center";
+                itemDiv.innerHTML = `
+                    <label class="block text-[11px] text-gray-400 text-center font-medium truncate mb-1 w-full">${p.label}</label>
+                    <input type="number" id="input-prod-${p.id}" value="0" min="0" class="w-full bg-cardBg text-center rounded-lg p-1.5 text-white focus:outline-none text-sm font-semibold border border-gray-900">
+                `;
+                container.appendChild(itemDiv);
+            });
+
+            if(isEditing && editingId !== null) {
+                const entry = database[currentActiveTab].find(i => i.id === editingId);
+                if(entry) {
+                    document.getElementById('formDate').value = entry.date;
+                    products.forEach(p => {
+                        const field = document.getElementById(`input-prod-${p.id}`);
+                        if(field) field.value = entry[p.id] || 0;
+                    });
+                }
+            }
+        }
+
+        function submitEntry() {
+            const dateVal = document.getElementById('formDate').value;
+            if(!dateVal) return alert("Select standard validation execution date.");
+
+            let entryPayload = {
+                id: isEditing ? editingId : Date.now(),
+                date: dateVal
+            };
+
+            let validationCheckPass = false;
+            products.forEach(p => {
+                const val = parseInt(document.getElementById(`input-prod-${p.id}`).value) || 0;
+                entryPayload[p.id] = val;
+                if(val > 0) validationCheckPass = true;
+            });
+
+            if(!validationCheckPass) return alert("Enter count allocation quantity metrics.");
+
+            if(isEditing) {
+                database[currentActiveTab] = database[currentActiveTab].map(i => i.id === editingId ? entryPayload : i);
+                cancelEditingMode();
+            } else {
+                database[currentActiveTab].unshift(entryPayload);
+            }
+
+            saveDataToDevice();
+            refreshAllAppLayers();
+            switchTab(currentActiveTab);
+        }
+
+        function renderActiveHistoryLogs() {
+            const container = document.getElementById('logContainer');
+            if(!container) return;
+            container.innerHTML = '';
+            
+            const records = database[currentActiveTab] || [];
+            document.getElementById('logTitle').innerText = `${currentActiveTab.charAt(0).toUpperCase() + currentActiveTab.slice(1)} Entry Records`;
+
+            if(records.length === 0) {
+                container.innerHTML = `<p class="text-xs text-gray-500 italic text-center py-4 bg-cardBg rounded-xl">No transactions found inside database module.</p>`;
+                return;
+            }
+
+            records.forEach(row => {
+                let textInfoSegments = [];
+                products.forEach(p => {
+                    if(row[p.id] && parseInt(row[p.id]) > 0) {
+                        textInfoSegments.push(`${p.label}: <strong>${row[p.id]}</strong>`);
+                    }
+                });
+
+                let badgeColor = 'bg-stockBlue/10 text-stockBlue';
+                if(currentActiveTab === 'postage') badgeColor = 'bg-postOrange/10 text-postOrange';
+                if(currentActiveTab === 'return') badgeColor = 'bg-returnPurple/10 text-returnPurple';
+
+                const card = document.createElement('div');
+                card.className = "bg-cardBg p-3.5 rounded-xl border border-gray-800 flex justify-between items-center gap-2 text-xs";
+                card.innerHTML = `
+                    <div class="flex flex-col gap-1 w-full">
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] px-2 py-0.5 font-bold rounded-md ${badgeColor}">${row.date}</span>
+                        </div>
+                        <div class="text-gray-300 text-[11px] leading-relaxed pt-0.5">${textInfoSegments.join(' , ')}</div>
+                    </div>
+                    <div class="flex gap-3 text-gray-400 font-medium shrink-0 pl-1">
+                        <button onclick="triggerEditingSequence(${row.id})" class="hover:text-white">✏️</button>
+                        <button onclick="dropRecordRow(${row.id})" class="hover:text-red-400">🗑️</button>
                     </div>
                 `;
+                container.appendChild(card);
             });
         }
 
-        function switchTab(tabType) {
-            if(isEditing) return;
-            currentActiveTab = tabType;
-            document.getElementById('stockManagementView').classList.add('hidden');
-            document.getElementById('labelHubView').classList.add('hidden');
-            document.getElementById('entryScreen').classList.remove('hidden');
+        function triggerEditingSequence(id) {
+            isEditing = true;
+            editingId = id;
+            document.getElementById('cancelEditBtn').classList.remove('hidden');
+            switchTab(currentActiveTab);
+        }
 
-            generateFormFields();
+        function cancelEditingMode() {
+            isEditing = false;
+            editingId = null;
+            document.getElementById('cancelEditBtn').classList.add('hidden');
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('formDate').value = today;
+            switchTab(currentActiveTab);
+        }
 
-            ['stock', 'postage', 'return'].forEach(t => {
-                document.getElementById(`tab-${t}`).className = "py-2 rounded-lg font-medium text-sm flex justify-center items-center gap-1 text-gray-400 bg-transparent";
-            });
-
-            const activeBtn = document.getElementById(`tab-${tabType}`);
-            const submitBtn = document.getElementById('formSubmitBtn');
-            
-            if(tabType === 'stock') {
-                activeBtn.classList.add('bg-stockBlue', 'text-white');
-                submitBtn.className = "w-full bg-stockBlue py-3 rounded-xl font-semibold text-white mt-2";
-                document.getElementById('formTitle').innerText = "Add Stock Entry";
-            } else if(tabType === 'postage') {
-                activeBtn.classList.add('bg-postOrange', 'text-white');
-                submitBtn.className = "w-full bg-postOrange py-3 rounded-xl font-semibold text-white mt-2";
-                document.getElementById('formTitle').innerText = "Add Postage Entry";
-            } else if(tabType === 'return') {
-                activeBtn.classList.add('bg-returnPurple', 'text-white');
-                submitBtn.className = "w-full bg-returnPurple py-3 rounded-xl font-semibold text-white mt-2";
-                document.getElementById('formTitle').innerText = "Add Return Entry";
+        function dropRecordRow(id) {
+            if(confirm("Drop entry line data row permanently?")) {
+                database[currentActiveTab] = database[currentActiveTab].filter(i => i.id !== id);
+                saveDataToDevice();
+                refreshAllAppLayers();
+                switchTab(currentActiveTab);
             }
-            renderLogs();
         }
 
-        // Upload and Media Buffer Pipelines
-        function handleFileSelectedName(inputElement) {
-            const feedback = document.getElementById('fileNameFeedback');
-            const submitBtn = document.getElementById('queueLabelBtn');
+        function switchTabToForm(tab) {
+            document.getElementById('stockManagementView').classList.add('hidden');
+            document.getElementById('entryScreen').classList.remove('hidden');
+            switchTab(tab);
+        }
 
-            if(inputElement.files && inputElement.files[0]) {
-                const file = inputElement.files[0];
-                feedback.innerText = `🔄 Processing file...`;
-                submitBtn.disabled = true;
-                submitBtn.classList.add('opacity-50');
-
-                const reader = new FileReader();
-                reader.onload = function(e) {
+        // Core Document / Printing Label Handling Subroutines
+        function handleFileSelectedName(input) {
+            const feed = document.getElementById('fileNameFeedback');
+            if(input.files && input.files[0]) {
+                feed.innerText = `Selected: "${input.files[0].name}"`;
+                
+                const rdr = new FileReader();
+                rdr.onload = function(e) {
                     base64FileBuffer = e.target.result;
-                    feedback.innerText = file.type === "application/pdf" ? `📄 PDF Ready: ${file.name}` : `📷 Image Ready: ${file.name}`;
-                    submitBtn.disabled = false;
-                    submitBtn.classList.remove('opacity-50');
-                };
-                reader.readAsDataURL(file);
+                }
+                rdr.readAsDataURL(input.files[0]);
             } else {
-                feedback.innerText = "";
+                feed.innerText = "";
                 base64FileBuffer = "";
             }
         }
 
         function addNewLabelToRegistry() {
-            const productSelect = document.getElementById('labelProductSelect').value;
-            const quantityInput = parseInt(document.getElementById('labelProductQty').value) || 1;
-            const targetDate = document.getElementById('labelFilterDate').value;
+            const pSelect = document.getElementById('labelProductSelect');
+            const qtyInput = document.getElementById('labelProductQty');
+            const targetProdId = pSelect.value;
+            const targetProdName = pSelect.options[pSelect.selectedIndex].text;
+            const qtyVal = parseInt(qtyInput.value) || 1;
+            const dateString = document.getElementById('labelFilterDate').value;
 
-            if(!productSelect) {
-                alert("Please add or select a product variant first.");
-                return;
-            }
-            if(!base64FileBuffer) {
-                alert("Please select a file via the input line field first.");
-                return;
-            }
+            if(!base64FileBuffer) return alert("Upload valid media document/PDF file standard buffer.");
 
-            const labelRecord = {
+            let payload = {
                 id: Date.now(),
-                date: targetDate, 
-                productId: productSelect,
-                qty: quantityInput,
+                date: dateString,
+                productId: targetProdId,
+                productLabel: targetProdName,
+                qty: qtyVal,
                 fileData: base64FileBuffer,
-                isPrinted: false
+                printed: false
             };
 
-            labelsDatabase.unshift(labelRecord);
+            labelsDatabase.unshift(payload);
             saveDataToDevice();
             
+            qtyInput.value = "1";
             document.getElementById('labelFileInput').value = "";
             document.getElementById('fileNameFeedback').innerText = "";
-            document.getElementById('labelProductQty').value = "1";
             base64FileBuffer = "";
-
-            renderLabelsHubTimeline();
+            
+            refreshAllAppLayers();
         }
 
-        // Ledger UI Component Renderer
         function renderLabelsHubTimeline() {
-            const timeline = document.getElementById('labelsTimelineContainer');
-            if(!timeline) return;
-            const currentDateFilter = document.getElementById('labelFilterDate').value;
-            timeline.innerHTML = '';
+            const container = document.getElementById('labelsTimelineContainer');
+            const filterDate = document.getElementById('labelFilterDate').value;
+            if(!container) return;
+            container.innerHTML = '';
 
-            const dailyLabels = labelsDatabase.filter(l => l.date === currentDateFilter);
+            let scopeSet = labelsDatabase.filter(l => l.date === filterDate);
 
-            if(dailyLabels.length === 0) {
-                timeline.innerHTML = `<p class="text-center text-sm text-gray-500 py-6">No labels queued for ${currentDateFilter}.</p>`;
+            if(scopeSet.length === 0) {
+                container.innerHTML = `<p class="text-xs text-gray-500 italic text-center py-6 bg-cardBg rounded-xl">No delivery labels uploaded on this calendar date index.</p>`;
                 return;
             }
 
-            dailyLabels.forEach(lbl => {
-                const productInfo = products.find(p => p.id === lbl.productId) || { label: 'Unknown Item' };
-                const currentStockLeft = getItemLeftCount(lbl.productId);
+            scopeSet.forEach(label => {
+                const block = document.createElement('div');
+                block.className = `bg-cardBg border p-4 rounded-xl flex items-center justify-between gap-3 text-xs transition ${label.printed ? 'border-gray-900 opacity-60' : 'border-orange-500/30 shadow-md'}`;
                 
-                let actionSection = "";
-                let badgeSection = "";
-
-                let isPDF = lbl.fileData.startsWith("data:application/pdf");
-                let displayAsset = isPDF 
-                    ? `<div class="w-full h-full flex items-center justify-center bg-gray-800 text-xs text-white font-mono rounded font-bold">PDF</div>`
-                    : `<img src="${lbl.fileData}" class="w-full h-full object-contain">`;
-
-                if(!lbl.isPrinted) {
-                    badgeSection = `<span class="text-[10px] bg-orange-500/10 text-orange-400 font-medium px-2 py-0.5 rounded-md">Pending Print</span>`;
-                    actionSection = `
-                        <div class="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-gray-800">
-                            <button onclick="openLabelPreviewModal(${lbl.id})" class="bg-gray-800 hover:bg-gray-700 text-xs py-2 rounded-lg font-semibold tracking-wide transition text-gray-300">
-                                🔎 Preview
-                            </button>
-                            <button onclick="triggerPrintAndPostAction(${lbl.id})" class="text-xs py-2 rounded-lg font-bold transition text-white bg-blue-600 hover:bg-blue-700">
-                                🖨️ Print & Post
-                            </button>
+                block.innerHTML = `
+                    <div class="flex flex-col gap-1 overflow-hidden">
+                        <span class="font-bold text-gray-200 text-sm truncate">${label.productLabel}</span>
+                        <div class="flex gap-2 items-center text-[11px] text-gray-400">
+                            <span>Ship Count: <strong class="text-white">${label.qty}</strong></span>
+                            <span>•</span>
+                            <span class="${label.printed ? 'text-gray-500' : 'text-orange-400 font-medium'}">${label.printed ? '✓ Printed Handled' : '🗂️ Active Queue'}</span>
                         </div>
-                    `;
-                } else {
-                    actionSection = `
-                        <div class="flex justify-between items-center mt-3 pt-3 border-t border-gray-800">
-                            <span class="text-xs bg-green-500/10 text-leftGreen font-medium px-2 py-0.5 rounded-md">✓ Printed & Dispatched</span>
-                            <button onclick="openLabelPreviewModal(${lbl.id})" class="text-[11px] text-gray-400 underline hover:text-white">Review Document</button>
-                        </div>
-                    `;
-                }
-
-                timeline.innerHTML += `
-                    <div class="bg-cardBg p-4 rounded-xl relative border-l-4 ${lbl.isPrinted ? 'border-leftGreen' : 'border-postOrange'}">
-                        <button onclick="removeLabelRecord(${lbl.id})" class="absolute top-3 right-3 text-gray-500 text-xs hover:text-red-400">🗑️</button>
-                        <div class="flex items-center justify-between gap-2">
-                            <div class="flex items-center gap-4 min-w-0 flex-1">
-                                <div class="w-14 h-14 bg-white rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden border border-gray-200">
-                                    ${displayAsset}
-                                </div>
-                                <div class="min-w-0 flex-1">
-                                    <div class="font-bold text-base text-gray-200 truncate">${productInfo.label}</div>
-                                    <div class="text-xs text-gray-400 mt-0.5 whitespace-nowrap">Quantity Order: <strong class="text-white">${lbl.qty} units</strong></div>
-                                </div>
-                            </div>
-                            <div class="text-right flex flex-col items-end gap-1 flex-shrink-0">
-                                ${badgeSection}
-                                <span class="text-[10px] text-gray-500">Available: ${currentStockLeft}</span>
-                            </div>
-                        </div>
-                        ${actionSection}
+                    </div>
+                    <div class="flex items-center gap-3 font-medium text-xs shrink-0">
+                        <button onclick="openLabelPreviewViewModal(${label.id})" class="bg-blue-600/10 text-blue-400 px-2.5 py-1.5 rounded-lg border border-blue-500/20 hover:bg-blue-600 hover:text-white transition">View</button>
+                        <button onclick="dropLabelRowItem(${label.id})" class="text-gray-500 hover:text-red-400">🗑️</button>
                     </div>
                 `;
+                container.appendChild(block);
             });
         }
 
-        // Screen Modal Operations Layer
-        function openLabelPreviewModal(id) {
-            const label = labelsDatabase.find(l => l.id === id);
-            if(!label) return;
+        function openLabelPreviewViewModal(id) {
+            const item = labelsDatabase.find(l => l.id === id);
+            if(!item) return;
 
-            const modal = document.getElementById('previewModal');
-            const previewContainer = document.getElementById('modalPreviewContainer');
-            const footerContainer = document.getElementById('modalFooterContainer');
+            const previewZone = document.getElementById('modalPreviewContainer');
+            const footerZone = document.getElementById('modalFooterContainer');
+            previewZone.innerHTML = '';
 
-            let isPDF = label.fileData.startsWith("data:application/pdf");
-            previewContainer.innerHTML = isPDF
-                ? `<embed src="${label.fileData}" type="application/pdf" class="w-full h-[55vh]">`
-                : `<img src="${label.fileData}" class="w-full h-auto object-contain max-h-[55vh]">`;
-
-            if(label.isPrinted) {
-                footerContainer.innerHTML = `
-                    <button onclick="closeLabelPreviewModal()" class="bg-gray-800 hover:bg-gray-700 font-medium py-2.5 rounded-xl text-xs text-gray-400 transition w-full col-span-2">
-                        Close Preview
-                    </button>
-                `;
+            if(item.fileData.startsWith('data:application/pdf')) {
+                previewZone.innerHTML = `<embed src="${item.fileData}" type="application/pdf" class="w-full h-[50vh] rounded-lg">`;
             } else {
-                footerContainer.innerHTML = `
-                    <button onclick="closeLabelPreviewModal()" class="bg-gray-800 hover:bg-gray-700 font-medium py-2.5 rounded-xl text-xs transition text-gray-400">
-                        Cancel
-                    </button>
-                    <button id="modalPrintActionBtn" class="bg-blue-600 hover:bg-blue-700 font-bold py-2.5 rounded-xl text-xs text-white shadow-md transition">
-                        🖨️ Print Now
-                    </button>
-                `;
-                
-                document.getElementById('modalPrintActionBtn').onclick = function() {
-                    closeLabelPreviewModal();
-                    triggerPrintAndPostAction(label.id);
-                };
+                previewZone.innerHTML = `<img src="${item.fileData}" class="max-w-full max-h-[50vh] object-contain rounded-lg">`;
             }
 
-            modal.classList.remove('hidden');
+            footerZone.innerHTML = `
+                <button onclick="markLabelStateProcessedToggle(${item.id})" class="bg-gray-800 text-gray-300 py-2.5 rounded-xl text-xs font-semibold hover:bg-gray-700 transition">
+                    ${item.printed ? 'Re-queue Label' : 'Mark Printed'}
+                </button>
+                <button onclick="executeLabelProductionPrint('${item.id}')" class="bg-orange-500 hover:bg-orange-600 text-white py-2.5 rounded-xl text-xs font-semibold shadow transition">
+                    Print Label
+                </button>
+            `;
+
+            document.getElementById('previewModal').classList.remove('hidden');
         }
 
         function closeLabelPreviewModal() {
             document.getElementById('previewModal').classList.add('hidden');
         }
 
-        // 100% Secure Synchronous Multi-browser Print Execution Strategy
-        function triggerPrintAndPostAction(id) {
-            const label = labelsDatabase.find(l => l.id === id);
-            if(!label || label.isPrinted) return;
-
-            const productInfo = products.find(p => p.id === label.productId) || { label: 'Unknown Item' };
-            const printLayer = document.getElementById('print-production-layer');
-            
-            let isPDF = label.fileData.startsWith("data:application/pdf");
-            let assetHtml = isPDF
-                ? `<embed src="${label.fileData}" type="application/pdf" style="width:100%; height:95vh;">`
-                : `<img src="${label.fileData}" style="max-width:100%; max-height:92vh; display:block; margin:20px auto; object-fit:contain;" />`;
-
-            // Clear old buffer content and inject current target media layout
-            printLayer.innerHTML = `
-                <div style="background:#ffffff; color:#000000; padding:20px; font-family:sans-serif; min-height:100vh; box-sizing:border-box;">
-                    <div style="font-size:16px; font-weight:bold; text-transform:uppercase; margin-bottom:15px; border-b:3px dashed #000000; padding-bottom:8px; letter-spacing:1px;">
-                        Product Dispatch Profile: ${productInfo.label}
-                    </div>
-                    <div style="width:100%; display:flex; justify-content:center; align-items:center;">
-                        ${assetHtml}
-                    </div>
-                </div>
-            `;
-
-            // Open printing layout channel 
-            printLayer.classList.remove('hidden');
-
-            // Setup a media query listener to see exactly when the print setup dialogue closes
-            const printCompletionWatcher = window.matchMedia('print');
-            
-            const postPrintDatabaseExecution = function(e) {
-                if (!e.matches) { 
-                    // This runs right after the dialog closes (printed or cancelled)
-                    printLayer.innerHTML = "";
-                    printLayer.classList.add('hidden');
-
-                    // Process and inject the ledger row tracking details
-                    let autoPostageRow = {
-                        id: Date.now() + 1,
-                        date: label.date
-                    };
-
-                    products.forEach(p => {
-                        autoPostageRow[p.id] = (p.id === label.productId) ? label.qty : 0;
-                    });
-
-                    database.postage.unshift(autoPostageRow);
-                    label.isPrinted = true;
-                    
-                    saveDataToDevice();
-                    refreshAllAppLayers();
-
-                    // Clean out listener allocations to prevent duplicate memory leaks
-                    printCompletionWatcher.removeListener(postPrintDatabaseExecution);
-                }
-            };
-
-            printCompletionWatcher.addListener(postPrintDatabaseExecution);
-
-            // Give the DOM 450ms to verify that the base64 graphics layout is fully rendered before launching window.print
-            setTimeout(() => {
-                window.print();
-            }, 450);
+        function markLabelStateProcessedToggle(id) {
+            const item = labelsDatabase.find(l => l.id === id);
+            if(item) {
+                item.printed = !item.printed;
+                saveDataToDevice();
+                refreshAllAppLayers();
+                closeLabelPreviewModal();
+            }
         }
 
-        function removeLabelRecord(id) {
-            if(confirm("Remove this shipping log reference?")) {
+        function executeLabelProductionPrint(id) {
+            const item = labelsDatabase.find(l => l.id === id);
+            if(!item) return;
+
+            const layer = document.getElementById('print-production-layer');
+            layer.innerHTML = '';
+
+            if(item.fileData.startsWith('data:application/pdf')) {
+                layer.innerHTML = `<embed src="${item.fileData}" type="application/pdf" style="width:100vw; h:100vh;">`;
+            } else {
+                layer.innerHTML = `
+                    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; text-align:center;">
+                        <h1 style="font-size:32px; font-weight:bold; font-family:sans-serif; margin-bottom:10px; color:#000;">${item.productLabel}</h1>
+                        <img src="${item.fileData}" style="max-width:100%; height:auto; display:block; margin:0 auto;">
+                    </div>
+                `;
+            }
+
+            item.printed = true;
+            saveDataToDevice();
+            refreshAllAppLayers();
+            closeLabelPreviewModal();
+
+            setTimeout(() => {
+                window.print();
+            }, 350);
+        }
+
+        function dropLabelRowItem(id) {
+            if(confirm("Drop label data reference file object?")) {
                 labelsDatabase = labelsDatabase.filter(l => l.id !== id);
                 saveDataToDevice();
-                renderLabelsHubTimeline();
+                refreshAllAppLayers();
             }
         }
 
         function showDashboardView() {
-            if(isEditing) return;
             document.getElementById('entryScreen').classList.add('hidden');
-            document.getElementById('labelHubView').classList.add('hidden');
             document.getElementById('stockManagementView').classList.remove('hidden');
-            activeGlobalScreen = 'stock-view';
-            document.getElementById('viewToggleBtn').innerText = "Go to Label Hub";
             refreshAllAppLayers();
-        }
-
-        // Ledger Entry Logs Logic Renderer
-        function renderLogs() {
-            const container = document.getElementById('logContainer');
-            if(!container) return;
-            container.innerHTML = '';
-            let dataList = database[currentActiveTab];
-            let borderClass = currentActiveTab === 'stock' ? 'border-stockBlue' : (currentActiveTab === 'postage' ? 'border-postOrange' : 'border-returnPurple');
-
-            if(!dataList || dataList.length === 0) {
-                container.innerHTML = `<p class="text-gray-500 text-sm text-center py-4">No records found.</p>`;
-                return;
-            }
-
-            dataList.forEach(entry => {
-                let metrics = '';
-                products.forEach(p => {
-                    metrics += `<div><div class="text-[10px] text-gray-500 truncate">${p.label}</div><div class="font-bold text-sm">${entry[p.id] || 0}</div></div>`;
-                });
-                container.innerHTML += `
-                    <div class="bg-cardBg rounded-xl p-4 border-l-4 ${borderClass} shadow">
-                        <div class="flex justify-between items-center mb-3">
-                            <span class="text-xs text-gray-400 font-medium">📅 ${entry.date}</span>
-                            <div class="flex gap-4 text-xs text-gray-400">
-                                <span class="cursor-pointer hover:text-white" onclick="startEditing(${entry.id})">✏️ Edit</span>
-                                <span class="cursor-pointer hover:text-red-400" onclick="deleteEntry(${entry.id})">🗑️ Delete</span>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-4 gap-1 text-center">${metrics}</div>
-                    </div>
-                `;
-            });
-        }
-
-        function startEditing(id) {
-            isEditing = true;
-            editingId = id;
-            const record = database[currentActiveTab].find(item => item.id === id);
-            if (!record) return;
-
-            document.getElementById('formDate').value = record.date;
-            products.forEach(p => {
-                const fld = document.getElementById(`input-${p.id}`);
-                if(fld) fld.value = record[p.id] || 0;
-            });
-
-            document.getElementById('formTitle').innerText = "Modify Entry";
-            document.getElementById('formSubmitBtn').innerText = "Save Changes";
-            document.getElementById('cancelEditBtn').classList.remove('hidden');
-            document.getElementById('backBtn').classList.add('opacity-50', 'cursor-not-allowed');
-        }
-
-        function cancelEditingMode() {
-            isEditing = false;
-            editingId = null;
-            document.getElementById('formDate').value = new Date().toISOString().split('T')[0];
-            document.getElementById('cancelEditBtn').classList.add('hidden');
-            document.getElementById('backBtn').classList.remove('opacity-50', 'cursor-not-allowed');
-            switchTab(currentActiveTab);
-        }
-
-        function submitEntry() {
-            const dt = document.getElementById('formDate').value;
-            if(!dt) return alert("Select a valid date.");
-
-            let payload = { date: dt };
-            products.forEach(p => {
-                payload[p.id] = parseInt(document.getElementById(`input-${p.id}`).value) || 0;
-            });
-
-            if(isEditing) {
-                let idx = database[currentActiveTab].findIndex(i => i.id === editingId);
-                if(idx !== -1) { payload.id = editingId; database[currentActiveTab][idx] = payload; }
-                isEditing = false;
-                editingId = null;
-                document.getElementById('cancelEditBtn').classList.add('hidden');
-                document.getElementById('backBtn').classList.remove('opacity-50', 'cursor-not-allowed');
-            } else {
-                payload.id = Date.now();
-                database[currentActiveTab].unshift(payload);
-            }
-            saveDataToDevice();
-            switchTab(currentActiveTab);
-        }
-
-        function deleteEntry(id) {
-            if(confirm("Permanently delete this entry log line?")) {
-                database[currentActiveTab] = database[currentActiveTab].filter(i => i.id !== id);
-                saveDataToDevice();
-                renderLogs();
-            }
         }
     </script>
 </body>
