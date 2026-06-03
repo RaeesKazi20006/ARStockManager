@@ -24,26 +24,48 @@
         }
     </script>
     <style>
+        /* Modern Global Print Styling Engine */
         @media print {
+            /* Hide absolute everything on the main web page window */
             body * {
                 visibility: hidden;
+                background: transparent !important;
             }
+            
+            /* Isolate the production printing view layer exclusively */
             #print-production-layer, #print-production-layer * {
-                visibility: visible;
+                visibility: visible !important;
             }
+            
             #print-production-layer {
                 position: absolute;
                 left: 0;
                 top: 0;
-                width: 100%;
+                width: 100% !important;
+                height: auto !important;
+                display: block !important;
+                background: transparent !important;
+            }
+
+            /* Clean page margin rules to strip standard browser headers/footers */
+            @page {
+                size: auto;
+                margin: 0mm;
+            }
+            body {
+                margin: 0px !important;
+                padding: 0px !important;
+                background: #0f1424 !important;
             }
         }
     </style>
 </head>
 <body class="bg-darkBg text-white font-sans min-h-screen p-4 flex flex-col items-center justify-start relative">
 
+    <!-- Isolated Print Production View Layer Container -->
     <div id="print-production-layer" class="hidden"></div>
 
+    <!-- Security Login Gate Layer -->
     <div id="loginScreenView" class="w-full max-w-md bg-cardBg rounded-2xl p-6 shadow-2xl my-auto flex flex-col gap-5 border border-gray-800">
         <div class="text-center flex flex-col items-center gap-2">
             <div class="bg-stockBlue/10 p-3 rounded-full text-stockBlue">
@@ -64,6 +86,7 @@
         </button>
     </div>
 
+    <!-- core Application App View Container -->
     <div id="appContainer" class="hidden w-full max-w-md bg-darkBg flex flex-col gap-6 pb-12">
         
         <div class="flex items-center justify-between pt-4 px-2">
@@ -109,7 +132,7 @@
                     <p class="text-center text-xs text-gray-500 italic mt-6">Stock - Posted + Return = Left</p>
                 </div>
 
-                <button onclick="switchTab('stock')" class="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-xl font-semibold tracking-wide transition shadow-lg">
+                <button onclick="switchTabToForm('stock')" class="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-xl font-semibold tracking-wide transition shadow-lg">
                     Open Entry Registers
                 </button>
             </div>
@@ -209,24 +232,26 @@
 
             <div id="reportTotalsOutputDisplay" class="grid grid-cols-2 gap-3"></div>
             
-            <div class="bg-cardBg rounded-2xl p-4 shadow-lg overflow-x-auto">
-                <h3 class="text-sm font-semibold text-gray-400 mb-3 tracking-wider uppercase pl-1">Product Data Breakdown</h3>
+            <!-- Snapshot breakdown view table container -->
+            <div class="bg-cardBg rounded-3xl p-5 shadow-xl border border-gray-800/50">
+                <h3 class="text-sm font-bold text-gray-400 mb-5 tracking-wider uppercase pl-1">Product Data Breakdown</h3>
                 <table class="w-full text-left text-xs border-collapse">
                     <thead>
-                        <tr class="border-b border-gray-800 text-gray-400 font-medium">
-                            <th class="py-2 px-1">Date</th>
-                            <th class="py-2 px-1">Item Name</th>
-                            <th class="py-2 px-1 text-center">Posted</th>
-                            <th class="py-2 px-1 text-right">Left</th>
+                        <tr class="border-b border-gray-800/80 text-gray-400 font-semibold text-[13px]">
+                            <th class="py-3 px-2">Date</th>
+                            <th class="py-3 px-2">Item Name</th>
+                            <th class="py-3 px-2 text-center">Posted</th>
+                            <th class="py-3 px-2 text-right">Left</th>
                         </tr>
                     </thead>
-                    <tbody id="reportBreakdownContainer"></tbody>
+                    <tbody id="reportBreakdownContainer" class="divide-y divide-gray-800/40"></tbody>
                 </table>
             </div>
         </div>
 
     </div>
 
+    <!-- Label File Preview Overlay Modal Window -->
     <div id="previewModal" onclick="closeLabelPreviewModal()" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
         <div onclick="event.stopPropagation()" class="bg-cardBg w-full max-w-sm rounded-2xl overflow-hidden p-4 flex flex-col gap-4 border border-gray-800 shadow-2xl">
             <div class="flex justify-between items-center">
@@ -241,12 +266,13 @@
     </div>
 
     <script>
-        // System Databases Init Setup
+        // Default System Product Definitions
         const defaultProducts = [
             { id: 'smb7', label: 'SMB7' },
             { id: 'e600', label: 'E600' },
             { id: 'e604', label: 'E604' },
-            { id: 'tlm103', label: 'TLM 103' }
+            { id: 'tlm103gold', label: 'TLM 103 - Gold' },
+            { id: 'tlm103black', label: 'TLM 103 - Black' }
         ];
 
         let products = JSON.parse(localStorage.getItem('sm_products')) || defaultProducts;
@@ -264,7 +290,7 @@
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('formDate').value = today;
             document.getElementById('labelFilterDate').value = today;
-            document.getElementById('reportScopeDateInput').value = today.substring(0, 7); // Default to current month
+            document.getElementById('reportScopeDateInput').value = today.substring(0, 7);
 
             if (sessionStorage.getItem('ar_authenticated') === 'true') {
                 document.getElementById('loginScreenView').classList.add('hidden');
@@ -402,10 +428,20 @@
             });
         }
 
-        function getItemLeftCount(productId) {
-            const totalStock = database.stock.reduce((sum, item) => sum + (parseInt(item[productId]) || 0), 0);
-            const totalPostage = database.postage.reduce((sum, item) => sum + (parseInt(item[productId]) || 0), 0);
-            const totalReturn = database.return.reduce((sum, item) => sum + (parseInt(item[productId]) || 0), 0);
+        function getItemLeftCount(productId, cutoffDate = null) {
+            let stockItems = database.stock;
+            let postageItems = database.postage;
+            let returnItems = database.return;
+
+            if (cutoffDate) {
+                stockItems = stockItems.filter(i => i.date <= cutoffDate);
+                postageItems = postageItems.filter(i => i.date <= cutoffDate);
+                returnItems = returnItems.filter(i => i.date <= cutoffDate);
+            }
+
+            const totalStock = stockItems.reduce((sum, item) => sum + (parseInt(item[productId]) || 0), 0);
+            const totalPostage = postageItems.reduce((sum, item) => sum + (parseInt(item[productId]) || 0), 0);
+            const totalReturn = returnItems.reduce((sum, item) => sum + (parseInt(item[productId]) || 0), 0);
             const balance = totalStock - totalPostage + totalReturn;
             return balance < 0 ? 0 : balance; 
         }
@@ -485,14 +521,12 @@
             let computedGlobalPost = 0;
             let computedGlobalReturn = 0;
 
-            // Gather chronologically unified operational dates
             let distinctDatesSet = new Set();
             stockPool.forEach(i => distinctDatesSet.add(i.date));
             postPool.forEach(i => distinctDatesSet.add(i.date));
             returnPool.forEach(i => distinctDatesSet.add(i.date));
             let sortedTimelineDates = Array.from(distinctDatesSet).sort();
 
-            // Total accumulators for standard summary display metrics
             products.forEach(p => {
                 stockPool.forEach(row => { computedGlobalStock += (parseInt(row[p.id]) || 0); });
                 postPool.forEach(row => { computedGlobalPost += (parseInt(row[p.id]) || 0); });
@@ -501,7 +535,6 @@
 
             let globalNetLeft = computedGlobalStock - computedGlobalPost + computedGlobalReturn;
 
-            // Render Totals Info Blocks
             const gridContainer = document.getElementById('reportTotalsOutputDisplay');
             gridContainer.innerHTML = `
                 <div class="bg-cardBg p-3 rounded-xl border border-gray-800">
@@ -522,7 +555,6 @@
                 </div>
             `;
 
-            // Build Row Layouts organized by Date - Item Name - Posted - Left
             const breakdownContainer = document.getElementById('reportBreakdownContainer');
             breakdownContainer.innerHTML = '';
 
@@ -533,23 +565,21 @@
 
             sortedTimelineDates.forEach(date => {
                 products.forEach(p => {
-                    // Calculate totals on this specific date
-                    let dayStock = stockPool.filter(i => i.date === date).reduce((sum, item) => sum + (parseInt(item[p.id]) || 0), 0);
                     let dayPost = postPool.filter(i => i.date === date).reduce((sum, item) => sum + (parseInt(item[p.id]) || 0), 0);
+                    let dayStock = stockPool.filter(i => i.date === date).reduce((sum, item) => sum + (parseInt(item[p.id]) || 0), 0);
                     let dayRet = returnPool.filter(i => i.date === date).reduce((sum, item) => sum + (parseInt(item[p.id]) || 0), 0);
 
-                    // Compute current running overall historical left value for specific profile balance metric layout
-                    let totalLeftVal = getItemLeftCount(p.id);
+                    // Grab exact chronological balance index state relative to target entry row
+                    let runningLeftVal = getItemLeftCount(p.id, date);
 
-                    // Show rows where an event occurred on that specific date
                     if (dayStock > 0 || dayPost > 0 || dayRet > 0) {
                         const tr = document.createElement('tr');
-                        tr.className = "border-b border-gray-900 hover:bg-innerCardBg/40 transition text-[11px] font-medium";
+                        tr.className = "border-b border-gray-800/30 hover:bg-innerCardBg/40 transition text-xs font-medium";
                         tr.innerHTML = `
-                            <td class="py-2.5 px-1 text-gray-400">${date}</td>
-                            <td class="py-2.5 px-1 text-gray-200 font-semibold">${p.label}</td>
-                            <td class="py-2.5 px-1 text-center text-postOrange font-bold">${dayPost}</td>
-                            <td class="py-2.5 px-1 text-right text-leftGreen font-bold">${totalLeftVal}</td>
+                            <td class="py-3.5 px-2 text-gray-400">${date}</td>
+                            <td class="py-3.5 px-2 text-gray-100 font-semibold">${p.label}</td>
+                            <td class="py-3.5 px-2 text-center text-postOrange font-bold text-sm">${dayPost}</td>
+                            <td class="py-3.5 px-2 text-right text-leftGreen font-bold text-sm">${runningLeftVal}</td>
                         `;
                         breakdownContainer.appendChild(tr);
                     }
@@ -557,43 +587,47 @@
             });
         }
 
+        // Refactored Report Print Exporter to match 'image_1d11aa.png' styled specifications
         function printFilteredReportLayout() {
-            const scopeText = document.getElementById('reportScopeSelect').options[document.getElementById('reportScopeSelect').selectedIndex].text;
-            const dataTotalsHtml = document.getElementById('reportTotalsOutputDisplay').innerHTML;
             const tableRowsHtml = document.getElementById('reportBreakdownContainer').innerHTML;
             const printLayer = document.getElementById('print-production-layer');
 
             printLayer.innerHTML = `
-                <div style="background:#ffffff; color:#000000; padding:35px; font-family:sans-serif; min-height:100vh; box-sizing:border-box;">
-                    <div style="border-b:4px solid #0f1424; padding-bottom:12px; margin-bottom:25px;">
-                        <h1 style="font-size:26px; margin:0; font-weight:800; color:#0f1424; text-transform:uppercase;">AR Stock Management Audit Report</h1>
-                        <p style="font-size:13px; color:#555555; margin:4px 0 0 0; font-weight:500;">Scope Window: <strong>${scopeText}</strong></p>
+                <div style="background-color: #0f1424; color: #ffffff; padding: 24px; font-family: sans-serif; min-height: 100vh; display: flex; flex-direction: column; items-center: justify-start;">
+                    <div style="background-color: #161c33; width: 100%; max-w: 440px; margin: 0 auto; border-radius: 24px; padding: 20px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3); border: 1px solid rgba(31, 41, 55, 0.5);">
+                        
+                        <h3 style="font-size: 14px; font-weight: 700; color: #9ca3af; letter-spacing: 0.05em; text-transform: uppercase; margin-top: 0; margin-bottom: 20px; padding-left: 4px;">
+                            Product Data Breakdown
+                        </h3>
+                        
+                        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 12px;">
+                            <thead>
+                                <tr style="border-b: 1px solid rgba(55, 65, 81, 0.8); color: #9ca3af; font-weight: 600;">
+                                    <th style="padding: 12px 8px;">Date</th>
+                                    <th style="padding: 12px 8px;">Item Name</th>
+                                    <th style="padding: 12px 8px; text-align: center;">Posted</th>
+                                    <th style="padding: 12px 8px; text-align: right;">Left</th>
+                                </tr>
+                            </thead>
+                            <tbody style="color: #f3f4f6;">
+                                ${tableRowsHtml}
+                            </tbody>
+                        </table>
+                        
                     </div>
-                    
-                    <div style="margin-bottom:30px; display:grid; grid-template-cols: repeat(2, 1fr); gap:15px;">
-                        ${dataTotalsHtml}
-                    </div>
-
-                    <h2 style="font-size:16px; font-weight:700; margin-bottom:12px; color:#0f1424; border-bottom:2px solid #eee; padding-bottom:6px;">Product Data Flow Ledger</h2>
-                    <table style="width:100%; border-collapse:collapse; font-size:12px; text-align:left;">
-                        <thead>
-                            <tr style="border-b:2px solid #000; color:#444; font-weight:bold;">
-                                <th style="padding:8px 4px;">Date</th>
-                                <th style="padding:8px 4px;">Item Name</th>
-                                <th style="padding:8px 4px; text-align:center;">Posted</th>
-                                <th style="padding:8px 4px; text-align:right;">Left</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${tableRowsHtml}
-                        </tbody>
-                    </table>
                 </div>
             `;
+            
+            // Inline custom element property visibility configurations for table rows
+            const rows = printLayer.querySelectorAll('tbody tr');
+            rows.forEach(r => {
+                r.style.borderBottom = "1px solid rgba(55, 65, 81, 0.3)";
+            });
+
             window.print();
         }
 
-        // Standard Entry Forms & Tab Systems Core Methods
+        // Form Inputs Setup Router
         function switchTab(targetTab) {
             currentActiveTab = targetTab;
             const tabs = ['stock', 'postage', 'return'];
@@ -757,7 +791,6 @@
             switchTab(tab);
         }
 
-        // Core Document / Printing Label Handling Subroutines
         function handleFileSelectedName(input) {
             const feed = document.getElementById('fileNameFeedback');
             if(input.files && input.files[0]) {
@@ -858,7 +891,7 @@
                 <button onclick="markLabelStateProcessedToggle(${item.id})" class="bg-gray-800 text-gray-300 py-2.5 rounded-xl text-xs font-semibold hover:bg-gray-700 transition">
                     ${item.printed ? 'Re-queue Label' : 'Mark Printed'}
                 </button>
-                <button onclick="executeLabelProductionPrint('${item.id}')" class="bg-orange-500 hover:bg-orange-600 text-white py-2.5 rounded-xl text-xs font-semibold shadow transition">
+                <button onclick="executeLabelProductionPrint(${item.id})" class="bg-orange-500 hover:bg-orange-600 text-white py-2.5 rounded-xl text-xs font-semibold shadow transition">
                     Print Label
                 </button>
             `;
@@ -880,6 +913,7 @@
             }
         }
 
+        // Cleaned up execution engine for raw label printing queues
         function executeLabelProductionPrint(id) {
             const item = labelsDatabase.find(l => l.id === id);
             if(!item) return;
@@ -888,12 +922,12 @@
             layer.innerHTML = '';
 
             if(item.fileData.startsWith('data:application/pdf')) {
-                layer.innerHTML = `<embed src="${item.fileData}" type="application/pdf" style="width:100vw; h:100vh;">`;
+                layer.innerHTML = `<embed src="${item.fileData}" type="application/pdf" style="width:100vw; height:100vh; position:fixed; top:0; left:0;">`;
             } else {
                 layer.innerHTML = `
-                    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; text-align:center;">
-                        <h1 style="font-size:32px; font-weight:bold; font-family:sans-serif; margin-bottom:10px; color:#000;">${item.productLabel}</h1>
-                        <img src="${item.fileData}" style="max-width:100%; height:auto; display:block; margin:0 auto;">
+                    <div style="width: 100%; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: white; padding: 20px; box-sizing: border-box;">
+                        <h1 style="font-size: 36px; font-weight: bold; font-family: sans-serif; margin: 0 0 20px 0; color: black; text-align: center;">${item.productLabel}</h1>
+                        <img src="${item.fileData}" style="max-width: 100%; height: auto; object-fit: contain; display: block;">
                     </div>
                 `;
             }
@@ -903,9 +937,10 @@
             refreshAllAppLayers();
             closeLabelPreviewModal();
 
+            // Minimal timeout delay execution sequence to populate buffer graphics
             setTimeout(() => {
                 window.print();
-            }, 350);
+            }, 300);
         }
 
         function dropLabelRowItem(id) {
