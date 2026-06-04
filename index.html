@@ -24,48 +24,74 @@
         }
     </script>
     <style>
-        /* Modern Global Print Styling Engine */
+        /* Mobile-First Optimized Print Engine Rules */
         @media print {
-            /* Hide absolutely everything on the main web page window */
-            body * {
-                visibility: hidden;
-                background: transparent !important;
-            }
-            
-            /* Isolate the production printing view layer exclusively */
-            #print-production-layer, #print-production-layer * {
-                visibility: visible !important;
-            }
-            
-            #print-production-layer {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100% !important;
+            /* 1. Force screen backgrounds off entirely and turn text dark */
+            html, body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                margin: 0mm !important;
+                padding: 0mm !important;
                 height: auto !important;
-                display: block !important;
-                background: transparent !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
 
-            /* Clean page margin rules to strip standard browser headers/footers and prevent blank extra sheets */
+            /* 2. Hide absolutely every core application UI screen block */
+            body > *:not(#print-production-layer) {
+                display: none !important;
+                visibility: hidden !important;
+                height: 0 !important;
+                overflow: hidden !important;
+            }
+            
+            /* 3. Isolate the target print canvas and completely drop dark containers */
+            #print-production-layer {
+                display: block !important;
+                visibility: visible !important;
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                height: auto !important;
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            /* 4. Force override child containers to strip dark blues/grays on iOS/Android */
+            #print-production-layer * {
+                visibility: visible !important;
+                background-color: transparent !important;
+                background-image: none !important;
+                color: #000000 !important;
+                box-shadow: none !important;
+                border-color: #e5e7eb !important;
+            }
+
+            /* 5. Keep target headers black for label titles */
+            #print-production-layer h1, 
+            #print-production-layer h2, 
+            #print-production-layer h3,
+            #print-production-layer strong {
+                color: #000000 !important;
+            }
+
             @page {
                 size: auto;
                 margin: 0mm;
-            }
-            body {
-                margin: 0px !important;
-                padding: 0px !important;
-                background: #0f1424 !important;
-                height: auto !important;
             }
         }
     </style>
 </head>
 <body class="bg-darkBg text-white font-sans min-h-screen p-4 flex flex-col items-center justify-start relative">
 
+    <!-- Isolated Print Production View Layer Container -->
     <div id="print-production-layer" class="hidden"></div>
 
-    <div id="loginScreenView" class="w-full max-w-md bg-cardBg rounded-2xl p-6 shadow-2xl my-auto flex flex-col gap-5 border border-gray-800">
+    <!-- Security Login Gate Layer -->
+    <div id="loginScreenView" class="w-full max-w-md bg-cardBg rounded-2xl p-6 shadow-2xl my-auto flex flex-col gap-4 border border-gray-800">
         <div class="text-center flex flex-col items-center gap-2">
             <div class="bg-stockBlue/10 p-3 rounded-full text-stockBlue">
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -73,34 +99,51 @@
                 </svg>
             </div>
             <h2 class="text-xl font-bold tracking-wide">System Access Locked</h2>
-            <p class="text-xs text-gray-400">Please provide authentication code token verification</p>
+            <p class="text-xs text-gray-400">Please provide identification and passcode credentials</p>
         </div>
-        <div>
-            <label class="block text-xs text-gray-400 mb-1">Passcode PIN</label>
-            <input type="password" id="sysPasswordInput" placeholder="••••" class="w-full bg-innerCardBg border border-gray-800 rounded-xl p-3 text-center text-xl text-white focus:outline-none tracking-widest">
-            <p id="loginErrorMsg" class="text-xs text-leftRed hidden text-center mt-2 font-medium">⚠️ Invalid passcode entered.</p>
+        
+        <div class="flex flex-col gap-3 mt-2">
+            <div>
+                <label class="block text-xs text-gray-400 mb-1">Your Name</label>
+                <input type="text" id="sysUsernameInput" placeholder="Enter username" class="w-full bg-innerCardBg border border-gray-800 rounded-xl p-3 text-white focus:outline-none text-sm font-medium">
+            </div>
+            <div>
+                <label class="block text-xs text-gray-400 mb-1">Passcode PIN</label>
+                <input type="password" id="sysPasswordInput" placeholder="••••" class="w-full bg-innerCardBg border border-gray-800 rounded-xl p-3 text-center text-xl text-white focus:outline-none tracking-widest">
+                <p id="loginErrorMsg" class="text-xs text-leftRed hidden text-center mt-2 font-medium">⚠️ Please enter your name and valid passcode.</p>
+            </div>
         </div>
-        <button onclick="validateAppAccessPassword()" class="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-xl font-semibold tracking-wide transition shadow-lg text-sm">
+        
+        <button onclick="validateAppAccessPassword()" class="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-xl font-semibold tracking-wide transition shadow-lg text-sm mt-1">
             Unlock Application Terminal
         </button>
     </div>
 
+    <!-- Core Application App View Container -->
     <div id="appContainer" class="hidden w-full max-w-md bg-darkBg flex flex-col gap-6 pb-12">
         
-        <div class="flex items-center justify-between pt-4 px-2">
-            <div class="flex items-center gap-3">
-                <svg class="w-8 h-8 text-stockBlue" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m-8-14l8 4m-8-4v10l8 4m0-10v10"></path>
-                </svg>
-                <h1 class="text-2xl font-bold tracking-wide">AR Stock Manager</h1>
+        <!-- App Top Header Area -->
+        <div class="flex flex-col gap-1 pt-4 px-2">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <svg class="w-8 h-8 text-stockBlue" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m-8-14l8 4m-8-4v10l8 4m0-10v10"></path>
+                    </svg>
+                    <h1 class="text-2xl font-bold tracking-wide">AR Stock Manager</h1>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <button id="viewToggleBtn" onclick="toggleGlobalView()" class="bg-blue-600 text-[11px] px-2.5 py-2 rounded-xl font-semibold shadow hover:bg-blue-700 transition">
+                        Go to Label Hub
+                    </button>
+                    <button onclick="logoutSecurely()" class="bg-gray-800 hover:bg-gray-700 text-gray-400 p-2 rounded-xl text-xs" title="Logout">
+                        ✕
+                    </button>
+                </div>
             </div>
-            <div class="flex items-center gap-1.5">
-                <button id="viewToggleBtn" onclick="toggleGlobalView()" class="bg-blue-600 text-[11px] px-2.5 py-2 rounded-xl font-semibold shadow hover:bg-blue-700 transition">
-                    Go to Label Hub
-                </button>
-                <button onclick="logoutSecurely()" class="bg-gray-800 hover:bg-gray-700 text-gray-400 p-2 rounded-xl text-xs" title="Logout">
-                    ✕
-                </button>
+            <!-- Session User Greeting Badge -->
+            <div class="flex items-center justify-between text-[11px] text-gray-400 mt-1 bg-innerCardBg/60 px-3 py-1.5 rounded-lg border border-gray-800/40">
+                <span>Active Terminal</span>
+                <span>User: <strong id="sessionUserDisplay" class="text-stockBlue">Guest</strong></span>
             </div>
         </div>
 
@@ -230,6 +273,7 @@
 
             <div id="reportTotalsOutputDisplay" class="grid grid-cols-2 gap-3"></div>
             
+            <!-- Snapshot breakdown view table container -->
             <div class="bg-cardBg rounded-3xl p-5 shadow-xl border border-gray-800/50">
                 <h3 class="text-sm font-bold text-gray-400 mb-5 tracking-wider uppercase pl-1">Product Data Breakdown</h3>
                 <table class="w-full text-left text-xs border-collapse">
@@ -248,6 +292,7 @@
 
     </div>
 
+    <!-- Label File Preview Overlay Modal Window -->
     <div id="previewModal" onclick="closeLabelPreviewModal()" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
         <div onclick="event.stopPropagation()" class="bg-cardBg w-full max-w-sm rounded-2xl overflow-hidden p-4 flex flex-col gap-4 border border-gray-800 shadow-2xl">
             <div class="flex justify-between items-center">
@@ -291,21 +336,33 @@
             if (sessionStorage.getItem('ar_authenticated') === 'true') {
                 document.getElementById('loginScreenView').classList.add('hidden');
                 document.getElementById('appContainer').classList.remove('hidden');
+                document.getElementById('sessionUserDisplay').innerText = sessionStorage.getItem('ar_username') || 'Operator';
             }
             refreshAllAppLayers();
         }
 
         function validateAppAccessPassword() {
+            const nameVal = document.getElementById('sysUsernameInput').value.trim();
             const pinVal = document.getElementById('sysPasswordInput').value;
             const errorFdbk = document.getElementById('loginErrorMsg');
             
+            if (!nameVal) {
+                errorFdbk.innerText = "⚠️ Please enter your name to login.";
+                errorFdbk.classList.remove('hidden');
+                return;
+            }
+
             if (pinVal === '1234') {
                 errorFdbk.classList.add('hidden');
                 sessionStorage.setItem('ar_authenticated', 'true');
+                sessionStorage.setItem('ar_username', nameVal);
+                
+                document.getElementById('sessionUserDisplay').innerText = nameVal;
                 document.getElementById('loginScreenView').classList.add('hidden');
                 document.getElementById('appContainer').classList.remove('hidden');
                 refreshAllAppLayers();
             } else {
+                errorFdbk.innerText = "⚠️ Invalid passcode entered.";
                 errorFdbk.classList.remove('hidden');
                 document.getElementById('sysPasswordInput').value = "";
             }
@@ -313,9 +370,11 @@
 
         function logoutSecurely() {
             sessionStorage.removeItem('ar_authenticated');
+            sessionStorage.removeItem('ar_username');
             document.getElementById('appContainer').classList.add('hidden');
             document.getElementById('loginScreenView').classList.remove('hidden');
             document.getElementById('sysPasswordInput').value = "";
+            document.getElementById('sysUsernameInput').value = "";
         }
 
         function saveDataToDevice() {
@@ -587,23 +646,23 @@
             const printLayer = document.getElementById('print-production-layer');
 
             printLayer.innerHTML = `
-                <div style="background-color: #0f1424; color: #ffffff; padding: 24px; font-family: sans-serif; min-height: 100vh; display: flex; flex-direction: column; items-center: justify-start;">
-                    <div style="background-color: #161c33; width: 100%; max-w: 440px; margin: 0 auto; border-radius: 24px; padding: 20px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3); border: 1px solid rgba(31, 41, 55, 0.5);">
+                <div style="background-color: #ffffff; color: #000000; padding: 24px; font-family: sans-serif; min-height: 100vh; display: flex; flex-direction: column; items-center: justify-start;">
+                    <div style="background-color: #ffffff; width: 100%; max-w: 440px; margin: 0 auto; border-radius: 24px; padding: 20px; border: 1px solid #e5e7eb;">
                         
-                        <h3 style="font-size: 14px; font-weight: 700; color: #9ca3af; letter-spacing: 0.05em; text-transform: uppercase; margin-top: 0; margin-bottom: 20px; padding-left: 4px;">
+                        <h3 style="font-size: 14px; font-weight: 700; color: #374151; letter-spacing: 0.05em; text-transform: uppercase; margin-top: 0; margin-bottom: 20px; padding-left: 4px;">
                             Product Data Breakdown
                         </h3>
                         
-                        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 12px;">
+                        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 12px; color: #000000;">
                             <thead>
-                                <tr style="border-b: 1px solid rgba(55, 65, 81, 0.8); color: #9ca3af; font-weight: 600;">
+                                <tr style="border-bottom: 2px solid #000000; color: #374151; font-weight: 600;">
                                     <th style="padding: 12px 8px;">Date</th>
                                     <th style="padding: 12px 8px;">Item Name</th>
                                     <th style="padding: 12px 8px; text-align: center;">Posted</th>
                                     <th style="padding: 12px 8px; text-align: right;">Left</th>
                                 </tr>
                             </thead>
-                            <tbody style="color: #f3f4f6;">
+                            <tbody>
                                 ${tableRowsHtml}
                             </tbody>
                         </table>
@@ -614,7 +673,10 @@
             
             const rows = printLayer.querySelectorAll('tbody tr');
             rows.forEach(r => {
-                r.style.borderBottom = "1px solid rgba(55, 65, 81, 0.3)";
+                r.style.borderBottom = "1px solid #e5e7eb";
+                r.style.color = "#000000";
+                const cells = r.querySelectorAll('td');
+                cells.forEach(c => c.style.color = "#000000");
             });
 
             window.print();
@@ -681,11 +743,13 @@
 
         function submitEntry() {
             const dateVal = document.getElementById('formDate').value;
+            const currentOperator = sessionStorage.getItem('ar_username') || 'Operator';
             if(!dateVal) return alert("Select standard validation execution date.");
 
             let entryPayload = {
                 id: isEditing ? editingId : Date.now(),
-                date: dateVal
+                date: dateVal,
+                user: currentOperator
             };
 
             let validationCheckPass = false;
@@ -698,6 +762,9 @@
             if(!validationCheckPass) return alert("Enter count allocation quantity metrics.");
 
             if(isEditing) {
+                // Keep the original user tag or overwrite with editor
+                const originalEntry = database[currentActiveTab].find(i => i.id === editingId);
+                if(originalEntry && originalEntry.user) entryPayload.user = originalEntry.user;
                 database[currentActiveTab] = database[currentActiveTab].map(i => i.id === editingId ? entryPayload : i);
                 cancelEditingMode();
             } else {
@@ -734,16 +801,19 @@
                 if(currentActiveTab === 'postage') badgeColor = 'bg-postOrange/10 text-postOrange';
                 if(currentActiveTab === 'return') badgeColor = 'bg-returnPurple/10 text-returnPurple';
 
+                const loggedUser = row.user || 'System';
+
                 const card = document.createElement('div');
                 card.className = "bg-cardBg p-3.5 rounded-xl border border-gray-800 flex justify-between items-center gap-2 text-xs";
                 card.innerHTML = `
                     <div class="flex flex-col gap-1 w-full">
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center justify-between w-full">
                             <span class="text-[10px] px-2 py-0.5 font-bold rounded-md ${badgeColor}">${row.date}</span>
+                            <span class="text-[10px] text-gray-500 italic font-medium">By: ${loggedUser}</span>
                         </div>
-                        <div class="text-gray-300 text-[11px] leading-relaxed pt-0.5">${textInfoSegments.join(' , ')}</div>
+                        <div class="text-gray-300 text-[11px] leading-relaxed pt-1">${textInfoSegments.join(' , ')}</div>
                     </div>
-                    <div class="flex gap-3 text-gray-400 font-medium shrink-0 pl-1">
+                    <div class="flex gap-3 text-gray-400 font-medium shrink-0 pl-2">
                         <button onclick="triggerEditingSequence(${row.id})" class="hover:text-white">✏️</button>
                         <button onclick="dropRecordRow(${row.id})" class="hover:text-red-400">🗑️</button>
                     </div>
@@ -806,6 +876,7 @@
             const targetProdName = pSelect.options[pSelect.selectedIndex].text;
             const qtyVal = parseInt(qtyInput.value) || 1;
             const dateString = document.getElementById('labelFilterDate').value;
+            const currentOperator = sessionStorage.getItem('ar_username') || 'Operator';
 
             if(!base64FileBuffer) return alert("Upload valid media document/PDF file standard buffer.");
 
@@ -816,7 +887,8 @@
                 productLabel: targetProdName,
                 qty: qtyVal,
                 fileData: base64FileBuffer,
-                printed: false
+                printed: false,
+                user: currentOperator
             };
 
             labelsDatabase.unshift(payload);
@@ -827,7 +899,6 @@
             document.getElementById('fileNameFeedback').innerText = "";
             base64FileBuffer = "";
             
-            // FIX 1: Instantly refresh the target timeline dashboard view row without requiring screen navigation toggles
             renderLabelsHubTimeline();
         }
 
@@ -848,16 +919,21 @@
                 const block = document.createElement('div');
                 block.className = `bg-cardBg border p-4 rounded-xl flex items-center justify-between gap-3 text-xs transition ${label.printed ? 'border-gray-900 opacity-60' : 'border-orange-500/30 shadow-md'}`;
                 
+                const labelOwner = label.user || 'System';
+
                 block.innerHTML = `
-                    <div class="flex flex-col gap-1 overflow-hidden">
-                        <span class="font-bold text-gray-200 text-sm truncate">${label.productLabel}</span>
-                        <div class="flex gap-2 items-center text-[11px] text-gray-400">
+                    <div class="flex flex-col gap-1 overflow-hidden w-full">
+                        <div class="flex justify-between items-center w-full">
+                            <span class="font-bold text-gray-200 text-sm truncate">${label.productLabel}</span>
+                            <span class="text-[10px] text-gray-500 italic font-medium">By: ${labelOwner}</span>
+                        </div>
+                        <div class="flex gap-2 items-center text-[11px] text-gray-400 pt-0.5">
                             <span>Ship Count: <strong class="text-white">${label.qty}</strong></span>
                             <span>•</span>
                             <span class="${label.printed ? 'text-gray-500' : 'text-orange-400 font-medium'}">${label.printed ? '✓ Printed Handled' : '🗂️ Active Queue'}</span>
                         </div>
                     </div>
-                    <div class="flex items-center gap-3 font-medium text-xs shrink-0">
+                    <div class="flex items-center gap-3 font-medium text-xs shrink-0 pl-1">
                         <button onclick="openLabelPreviewViewModal(${label.id})" class="bg-blue-600/10 text-blue-400 px-2.5 py-1.5 rounded-lg border border-blue-500/20 hover:bg-blue-600 hover:text-white transition">View</button>
                         <button onclick="dropLabelRowItem(${label.id})" class="text-gray-500 hover:text-red-400">🗑️</button>
                     </div>
@@ -880,7 +956,6 @@
                 previewZone.innerHTML = `<img src="${item.fileData}" class="max-w-full max-h-[50vh] object-contain rounded-lg">`;
             }
 
-            // FIX 3: Cleaned up scope execution variables to avoid string evaluation breaks inside modal action triggers
             footerZone.innerHTML = `
                 <button onclick="markLabelStateProcessedToggle(${item.id})" class="bg-gray-800 text-gray-300 py-2.5 rounded-xl text-xs font-semibold hover:bg-gray-700 transition">
                     ${item.printed ? 'Re-queue Label' : 'Mark Printed'}
@@ -914,14 +989,13 @@
             const layer = document.getElementById('print-production-layer');
             layer.innerHTML = '';
 
-            // FIX 2: Restructured image wrapping containers to clip white margins, dropping extra blank sheets
             if(item.fileData.startsWith('data:application/pdf')) {
-                layer.innerHTML = `<embed src="${item.fileData}" type="application/pdf" style="width:100vw; height:100vh; position:fixed; top:0; left:0;">`;
+                layer.innerHTML = `<embed src="${item.fileData}" type="application/pdf" style="width:100vw; height:100vh; position:fixed; top:0; left:0; background:white;">`;
             } else {
                 layer.innerHTML = `
-                    <div style="width: 100%; max-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: white; padding: 0px; margin: 0px; box-sizing: border-box; overflow: hidden;">
-                        <h1 style="font-size: 28px; font-weight: bold; font-family: sans-serif; margin: 10px 0; color: black; text-align: center;">${item.productLabel}</h1>
-                        <img src="${item.fileData}" style="max-width: 100%; max-height: 85vh; object-fit: contain; display: block; margin: 0 auto;">
+                    <div style="width: 100%; max-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: white !important; padding: 0px; margin: 0px; box-sizing: border-box; overflow: hidden;">
+                        <h1 style="font-size: 28px; font-weight: bold; font-family: sans-serif; margin: 10px 0; color: #000000 !important; text-align: center;">${item.productLabel}</h1>
+                        <img src="${item.fileData}" style="max-width: 100%; max-height: 85vh; object-fit: contain; display: block; margin: 0 auto; background: white !important;">
                     </div>
                 `;
             }
