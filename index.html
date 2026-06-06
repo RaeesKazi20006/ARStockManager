@@ -154,14 +154,31 @@
 
         <div id="coreDashboardModuleBlock" class="flex flex-col gap-6">
             <div id="stockManagementView" class="flex flex-col gap-6">
-                <div class="bg-cardBg rounded-2xl p-4 shadow-lg">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-lg font-semibold text-gray-200">Products Profile</h2>
-                        <button onclick="createNewProduct()" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-lg text-sm font-medium transition">
-                            + Add
-                        </button>
+                
+                <!-- Space Saving Collapsible Product Profile Accordion Menu -->
+                <div class="bg-cardBg rounded-2xl border border-gray-800/60 shadow-lg overflow-hidden transition-all duration-200">
+                    <button onclick="toggleProductDropdownMenu()" class="w-full flex items-center justify-between p-4 bg-cardBg text-sm font-semibold text-gray-300 hover:bg-innerCardBg/40 transition focus:outline-none">
+                        <div class="flex items-center gap-2">
+                            <span>⚙️</span>
+                            <span>Product Profiles Configuration</span>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <span id="productProfileCountBadge" class="bg-innerCardBg text-stockBlue text-[11px] px-2 py-0.5 rounded-md border border-gray-800">0 Items</span>
+                            <svg id="productDropdownArrowIcon" class="w-4 h-4 transform transition-transform duration-200 text-gray-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                <path d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+                    </button>
+                    
+                    <div id="collapsibleProductContentBlock" class="hidden border-t border-gray-800/80 bg-innerCardBg/40 p-4 flex flex-col gap-3">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-xs text-gray-400 font-medium">Manage active variant fields:</span>
+                            <button onclick="createNewProduct()" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-sm">
+                                <span>+</span> Add New
+                            </button>
+                        </div>
+                        <div id="productsContainer" class="flex flex-col gap-2 max-h-[190px] overflow-y-auto pr-1"></div>
                     </div>
-                    <div id="productsContainer" class="flex flex-col gap-2"></div>
                 </div>
 
                 <div class="bg-cardBg rounded-2xl p-4 shadow-lg">
@@ -326,6 +343,7 @@
         let activeGlobalScreen = 'stock-view'; 
         let base64FileBuffer = ""; 
         let currentActiveModule = 'dashboard';
+        let isProductMenuOpen = false;
 
         window.onload = function() {
             const today = new Date().toISOString().split('T')[0];
@@ -375,6 +393,20 @@
             document.getElementById('loginScreenView').classList.remove('hidden');
             document.getElementById('sysPasswordInput').value = "";
             document.getElementById('sysUsernameInput').value = "";
+        }
+
+        function toggleProductDropdownMenu() {
+            isProductMenuOpen = !isProductMenuOpen;
+            const block = document.getElementById('collapsibleProductContentBlock');
+            const arrow = document.getElementById('productDropdownArrowIcon');
+            
+            if(isProductMenuOpen) {
+                block.classList.remove('hidden');
+                arrow.classList.add('rotate-180');
+            } else {
+                block.classList.add('hidden');
+                arrow.classList.remove('rotate-180');
+            }
         }
 
         function saveDataToDevice() {
@@ -430,16 +462,22 @@
 
         function renderProductsList() {
             const container = document.getElementById('productsContainer');
+            const countBadge = document.getElementById('productProfileCountBadge');
             if(!container) return;
+            
             container.innerHTML = '';
+            if(countBadge) {
+                countBadge.innerText = `${products.length} Items`;
+            }
+
             products.forEach(prod => {
                 const row = document.createElement('div');
-                row.className = "bg-innerCardBg p-3 rounded-xl flex justify-between items-center";
+                row.className = "bg-innerCardBg p-2.5 rounded-xl flex justify-between items-center border border-gray-800/40 text-xs";
                 row.innerHTML = `
-                    <span class="font-medium text-gray-200">${prod.label}</span>
-                    <div class="flex gap-4 text-sm text-gray-400">
-                        <button onclick="editProductInline('${prod.id}')" class="hover:text-white">✏️</button>
-                        <button onclick="deleteProductComplete('${prod.id}')" class="hover:text-red-400">🗑️</button>
+                    <span class="font-semibold text-gray-300 truncate max-w-[200px]">${prod.label}</span>
+                    <div class="flex gap-4 text-xs text-gray-400 font-medium shrink-0 pl-2">
+                        <button onclick="editProductInline('${prod.id}')" class="hover:text-white transition">✏️</button>
+                        <button onclick="deleteProductComplete('${prod.id}')" class="hover:text-red-400 transition">🗑️</button>
                     </div>
                 `;
                 container.appendChild(row);
@@ -762,7 +800,6 @@
             if(!validationCheckPass) return alert("Enter count allocation quantity metrics.");
 
             if(isEditing) {
-                // Keep the original user tag or overwrite with editor
                 const originalEntry = database[currentActiveTab].find(i => i.id === editingId);
                 if(originalEntry && originalEntry.user) entryPayload.user = originalEntry.user;
                 database[currentActiveTab] = database[currentActiveTab].map(i => i.id === editingId ? entryPayload : i);
