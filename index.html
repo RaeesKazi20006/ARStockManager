@@ -26,7 +26,6 @@
     <style>
         /* Mobile-First Optimized Print Engine Rules */
         @media print {
-            /* 1. Force screen backgrounds off entirely and turn text dark */
             html, body {
                 background: #ffffff !important;
                 color: #000000 !important;
@@ -37,7 +36,6 @@
                 print-color-adjust: exact !important;
             }
 
-            /* 2. Hide absolutely every core application UI screen block */
             body > *:not(#print-production-layer) {
                 display: none !important;
                 visibility: hidden !important;
@@ -45,7 +43,6 @@
                 overflow: hidden !important;
             }
             
-            /* 3. Isolate the target print canvas and completely drop dark containers */
             #print-production-layer {
                 display: block !important;
                 visibility: visible !important;
@@ -60,7 +57,6 @@
                 margin: 0 !important;
             }
 
-            /* 4. Force override child containers to strip dark blues/grays on iOS/Android */
             #print-production-layer * {
                 visibility: visible !important;
                 background-color: transparent !important;
@@ -70,7 +66,6 @@
                 border-color: #e5e7eb !important;
             }
 
-            /* 5. Keep target headers black for label titles */
             #print-production-layer h1, 
             #print-production-layer h2, 
             #print-production-layer h3,
@@ -83,14 +78,24 @@
                 margin: 0mm;
             }
         }
+
+        /* Elegant custom scrollbar for the product list container panel */
+        .custom-scroll::-webkit-scrollbar {
+            width: 5px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #161c33;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #0b0f1c;
+            border-radius: 10px;
+        }
     </style>
 </head>
 <body class="bg-darkBg text-white font-sans min-h-screen p-4 flex flex-col items-center justify-start relative">
 
-    <!-- Isolated Print Production View Layer Container -->
     <div id="print-production-layer" class="hidden"></div>
 
-    <!-- Security Login Gate Layer -->
     <div id="loginScreenView" class="w-full max-w-md bg-cardBg rounded-2xl p-6 shadow-2xl my-auto flex flex-col gap-4 border border-gray-800">
         <div class="text-center flex flex-col items-center gap-2">
             <div class="bg-stockBlue/10 p-3 rounded-full text-stockBlue">
@@ -119,10 +124,8 @@
         </button>
     </div>
 
-    <!-- Core Application App View Container -->
     <div id="appContainer" class="hidden w-full max-w-md bg-darkBg flex flex-col gap-6 pb-12">
         
-        <!-- App Top Header Area -->
         <div class="flex flex-col gap-1 pt-4 px-2">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
@@ -140,7 +143,6 @@
                     </button>
                 </div>
             </div>
-            <!-- Session User Greeting Badge -->
             <div class="flex items-center justify-between text-[11px] text-gray-400 mt-1 bg-innerCardBg/60 px-3 py-1.5 rounded-lg border border-gray-800/40">
                 <span>Active Terminal</span>
                 <span>User: <strong id="sessionUserDisplay" class="text-stockBlue">Guest</strong></span>
@@ -155,30 +157,23 @@
         <div id="coreDashboardModuleBlock" class="flex flex-col gap-6">
             <div id="stockManagementView" class="flex flex-col gap-6">
                 
-                <!-- Space Saving Collapsible Product Profile Accordion Menu -->
-                <div class="bg-cardBg rounded-2xl border border-gray-800/60 shadow-lg overflow-hidden transition-all duration-200">
-                    <button onclick="toggleProductDropdownMenu()" class="w-full flex items-center justify-between p-4 bg-cardBg text-sm font-semibold text-gray-300 hover:bg-innerCardBg/40 transition focus:outline-none">
-                        <div class="flex items-center gap-2">
+                <div class="bg-cardBg rounded-2xl border border-gray-800/60 shadow-lg p-4 flex flex-col gap-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2 text-sm font-semibold text-gray-300">
                             <span>⚙️</span>
                             <span>Product Profiles Configuration</span>
                         </div>
-                        <div class="flex items-center gap-2.5">
-                            <span id="productProfileCountBadge" class="bg-innerCardBg text-stockBlue text-[11px] px-2 py-0.5 rounded-md border border-gray-800">0 Items</span>
-                            <svg id="productDropdownArrowIcon" class="w-4 h-4 transform transition-transform duration-200 text-gray-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                                <path d="M19 9l-7 7-7-7"></path>
-                            </svg>
-                        </div>
-                    </button>
-                    
-                    <div id="collapsibleProductContentBlock" class="hidden border-t border-gray-800/80 bg-innerCardBg/40 p-4 flex flex-col gap-3">
-                        <div class="flex justify-between items-center mb-1">
-                            <span class="text-xs text-gray-400 font-medium">Manage active variant fields:</span>
-                            <button onclick="createNewProduct()" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-sm">
-                                <span>+</span> Add New
-                            </button>
-                        </div>
-                        <div id="productsContainer" class="flex flex-col gap-2 max-h-[190px] overflow-y-auto pr-1"></div>
+                        <span id="productProfileCountBadge" class="bg-innerCardBg text-stockBlue text-[11px] px-2 py-0.5 rounded-md border border-gray-800 font-medium">0 Items</span>
                     </div>
+                    
+                    <div class="flex justify-between items-center border-t border-gray-800/40 pt-2.5">
+                        <span class="text-xs text-gray-400 font-medium">Manage active variant fields:</span>
+                        <button onclick="createNewProduct()" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-sm">
+                            <span>+</span> Add New
+                        </button>
+                    </div>
+
+                    <div id="productsContainer" class="flex flex-col gap-2 max-h-[190px] overflow-y-auto pr-1 custom-scroll"></div>
                 </div>
 
                 <div class="bg-cardBg rounded-2xl p-4 shadow-lg">
@@ -290,7 +285,6 @@
 
             <div id="reportTotalsOutputDisplay" class="grid grid-cols-2 gap-3"></div>
             
-            <!-- Snapshot breakdown view table container -->
             <div class="bg-cardBg rounded-3xl p-5 shadow-xl border border-gray-800/50">
                 <h3 class="text-sm font-bold text-gray-400 mb-5 tracking-wider uppercase pl-1">Product Data Breakdown</h3>
                 <table class="w-full text-left text-xs border-collapse">
@@ -309,7 +303,6 @@
 
     </div>
 
-    <!-- Label File Preview Overlay Modal Window -->
     <div id="previewModal" onclick="closeLabelPreviewModal()" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
         <div onclick="event.stopPropagation()" class="bg-cardBg w-full max-w-sm rounded-2xl overflow-hidden p-4 flex flex-col gap-4 border border-gray-800 shadow-2xl">
             <div class="flex justify-between items-center">
@@ -343,7 +336,6 @@
         let activeGlobalScreen = 'stock-view'; 
         let base64FileBuffer = ""; 
         let currentActiveModule = 'dashboard';
-        let isProductMenuOpen = false;
 
         window.onload = function() {
             const today = new Date().toISOString().split('T')[0];
@@ -393,20 +385,6 @@
             document.getElementById('loginScreenView').classList.remove('hidden');
             document.getElementById('sysPasswordInput').value = "";
             document.getElementById('sysUsernameInput').value = "";
-        }
-
-        function toggleProductDropdownMenu() {
-            isProductMenuOpen = !isProductMenuOpen;
-            const block = document.getElementById('collapsibleProductContentBlock');
-            const arrow = document.getElementById('productDropdownArrowIcon');
-            
-            if(isProductMenuOpen) {
-                block.classList.remove('hidden');
-                arrow.classList.add('rotate-180');
-            } else {
-                block.classList.add('hidden');
-                arrow.classList.remove('rotate-180');
-            }
         }
 
         function saveDataToDevice() {
@@ -575,491 +553,265 @@
             const wrapper = document.getElementById('reportRangeDynamicContainer');
             const label = document.getElementById('rangeInputLabel');
             const input = document.getElementById('reportScopeDateInput');
-
+            
             if(mode === 'all') {
                 wrapper.classList.add('hidden');
-            } else if(mode === 'month') {
+            } else {
                 wrapper.classList.remove('hidden');
-                label.innerText = "Select Calendar Month Target";
-                input.type = "month";
-                if(input.value.length > 7) input.value = input.value.substring(0, 7);
-            } else if(mode === 'day') {
-                wrapper.classList.remove('hidden');
-                label.innerText = "Select Single Day Calendar Target";
-                input.type = "date";
-                if(input.value.length === 7) input.value = input.value + "-01";
+                if(mode === 'month') {
+                    label.innerText = "Select Target Month";
+                    input.type = "month";
+                } else {
+                    label.innerText = "Select Target Day";
+                    input.type = "date";
+                }
             }
             generateCalculatedComprehensiveReport();
         }
 
-        function generateCalculatedComprehensiveReport() {
-            const mode = document.getElementById('reportScopeSelect').value;
-            const rawFilterVal = document.getElementById('reportScopeDateInput').value;
-
-            let stockPool = [...database.stock];
-            let postPool = [...database.postage];
-            let returnPool = [...database.return];
-
-            if(mode === 'month' && rawFilterVal) {
-                stockPool = stockPool.filter(i => i.date.substring(0, 7) === rawFilterVal);
-                postPool = postPool.filter(i => i.date.substring(0, 7) === rawFilterVal);
-                returnPool = returnPool.filter(i => i.date.substring(0, 7) === rawFilterVal);
-            } else if(mode === 'day' && rawFilterVal) {
-                stockPool = stockPool.filter(i => i.date === rawFilterVal);
-                postPool = postPool.filter(i => i.date === rawFilterVal);
-                returnPool = returnPool.filter(i => i.date === rawFilterVal);
-            }
-
-            let computedGlobalStock = 0;
-            let computedGlobalPost = 0;
-            let computedGlobalReturn = 0;
-
-            let distinctDatesSet = new Set();
-            stockPool.forEach(i => distinctDatesSet.add(i.date));
-            postPool.forEach(i => distinctDatesSet.add(i.date));
-            returnPool.forEach(i => distinctDatesSet.add(i.date));
-            let sortedTimelineDates = Array.from(distinctDatesSet).sort();
-
-            products.forEach(p => {
-                stockPool.forEach(row => { computedGlobalStock += (parseInt(row[p.id]) || 0); });
-                postPool.forEach(row => { computedGlobalPost += (parseInt(row[p.id]) || 0); });
-                returnPool.forEach(row => { computedGlobalReturn += (parseInt(row[p.id]) || 0); });
-            });
-
-            let globalNetLeft = computedGlobalStock - computedGlobalPost + computedGlobalReturn;
-
-            const gridContainer = document.getElementById('reportTotalsOutputDisplay');
-            gridContainer.innerHTML = `
-                <div class="bg-cardBg p-3 rounded-xl border border-gray-800">
-                    <span class="block text-[10px] uppercase tracking-wider text-gray-400 font-medium">Stock Added</span>
-                    <strong class="text-xl text-stockBlue">${computedGlobalStock}</strong>
-                </div>
-                <div class="bg-cardBg p-3 rounded-xl border border-gray-800">
-                    <span class="block text-[10px] uppercase tracking-wider text-gray-400 font-medium">Units Posted</span>
-                    <strong class="text-xl text-postOrange">${computedGlobalPost}</strong>
-                </div>
-                <div class="bg-cardBg p-3 rounded-xl border border-gray-800">
-                    <span class="block text-[10px] uppercase tracking-wider text-gray-400 font-medium">Units Returned</span>
-                    <strong class="text-xl text-returnPurple">${computedGlobalReturn}</strong>
-                </div>
-                <div class="bg-cardBg p-3 rounded-xl border border-gray-800">
-                    <span class="block text-[10px] uppercase tracking-wider text-gray-400 font-medium">Period Margin Net</span>
-                    <strong class="text-xl ${globalNetLeft >= 0 ? 'text-leftGreen' : 'text-leftRed'}">${globalNetLeft}</strong>
-                </div>
-            `;
-
-            const breakdownContainer = document.getElementById('reportBreakdownContainer');
-            breakdownContainer.innerHTML = '';
-
-            if (sortedTimelineDates.length === 0) {
-                breakdownContainer.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-500 italic">No entry logs match active parameters.</td></tr>`;
-                return;
-            }
-
-            sortedTimelineDates.forEach(date => {
-                products.forEach(p => {
-                    let dayPost = postPool.filter(i => i.date === date).reduce((sum, item) => sum + (parseInt(item[p.id]) || 0), 0);
-                    let dayStock = stockPool.filter(i => i.date === date).reduce((sum, item) => sum + (parseInt(item[p.id]) || 0), 0);
-                    let dayRet = returnPool.filter(i => i.date === date).reduce((sum, item) => sum + (parseInt(item[p.id]) || 0), 0);
-
-                    let runningLeftVal = getItemLeftCount(p.id, date);
-
-                    if (dayStock > 0 || dayPost > 0 || dayRet > 0) {
-                        const tr = document.createElement('tr');
-                        tr.className = "border-b border-gray-800/30 hover:bg-innerCardBg/40 transition text-xs font-medium";
-                        tr.innerHTML = `
-                            <td class="py-3.5 px-2 text-gray-400">${date}</td>
-                            <td class="py-3.5 px-2 text-gray-100 font-semibold">${p.label}</td>
-                            <td class="py-3.5 px-2 text-center text-postOrange font-bold text-sm">${dayPost}</td>
-                            <td class="py-3.5 px-2 text-right text-leftGreen font-bold text-sm">${runningLeftVal}</td>
-                        `;
-                        breakdownContainer.appendChild(tr);
-                    }
-                });
-            });
+        function switchTabToForm(tabName) {
+            document.getElementById('stockManagementView').classList.add('hidden');
+            document.getElementById('entryScreen').classList.remove('hidden');
+            switchTab(tabName);
         }
 
-        function printFilteredReportLayout() {
-            const tableRowsHtml = document.getElementById('reportBreakdownContainer').innerHTML;
-            const printLayer = document.getElementById('print-production-layer');
-
-            printLayer.innerHTML = `
-                <div style="background-color: #ffffff; color: #000000; padding: 24px; font-family: sans-serif; min-height: 100vh; display: flex; flex-direction: column; items-center: justify-start;">
-                    <div style="background-color: #ffffff; width: 100%; max-w: 440px; margin: 0 auto; border-radius: 24px; padding: 20px; border: 1px solid #e5e7eb;">
-                        
-                        <h3 style="font-size: 14px; font-weight: 700; color: #374151; letter-spacing: 0.05em; text-transform: uppercase; margin-top: 0; margin-bottom: 20px; padding-left: 4px;">
-                            Product Data Breakdown
-                        </h3>
-                        
-                        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 12px; color: #000000;">
-                            <thead>
-                                <tr style="border-bottom: 2px solid #000000; color: #374151; font-weight: 600;">
-                                    <th style="padding: 12px 8px;">Date</th>
-                                    <th style="padding: 12px 8px;">Item Name</th>
-                                    <th style="padding: 12px 8px; text-align: center;">Posted</th>
-                                    <th style="padding: 12px 8px; text-align: right;">Left</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${tableRowsHtml}
-                            </tbody>
-                        </table>
-                        
-                    </div>
-                </div>
-            `;
-            
-            const rows = printLayer.querySelectorAll('tbody tr');
-            rows.forEach(r => {
-                r.style.borderBottom = "1px solid #e5e7eb";
-                r.style.color = "#000000";
-                const cells = r.querySelectorAll('td');
-                cells.forEach(c => c.style.color = "#000000");
-            });
-
-            window.print();
+        function showDashboardView() {
+            document.getElementById('entryScreen').classList.add('hidden');
+            document.getElementById('stockManagementView').classList.remove('hidden');
+            cancelEditingMode();
         }
 
-        function switchTab(targetTab) {
-            currentActiveTab = targetTab;
-            const tabs = ['stock', 'postage', 'return'];
-            tabs.forEach(t => {
-                const btn = document.getElementById(`tab-${t}`);
-                if(t === targetTab) {
-                    btn.className = "py-2 rounded-lg font-medium text-sm flex justify-center items-center gap-1 bg-cardBg text-white shadow";
-                } else {
-                    btn.className = "py-2 rounded-lg font-medium text-sm flex justify-center items-center gap-1 text-gray-400 hover:text-white";
-                }
-            });
+        function switchTab(tabName) {
+            currentActiveTab = tabName;
+            const tStock = document.getElementById('tab-stock');
+            const tPost = document.getElementById('tab-postage');
+            const tRet = document.getElementById('tab-return');
+            const btnSubmit = document.getElementById('formSubmitBtn');
 
-            const title = document.getElementById('formTitle');
-            const submitBtn = document.getElementById('formSubmitBtn');
-            
-            if(targetTab === 'stock') {
-                title.innerText = isEditing ? "Modify Stock Entry" : "Add Stock Entry";
-                submitBtn.className = "w-full py-3 rounded-xl font-semibold text-white mt-2 bg-stockBlue hover:bg-blue-600";
-                submitBtn.innerText = isEditing ? "Save Entry Changes" : "Register Stock Input";
-            } else if(targetTab === 'postage') {
-                title.innerText = isEditing ? "Modify Postage Entry" : "Add Postage Entry";
-                submitBtn.className = "w-full py-3 rounded-xl font-semibold text-white mt-2 bg-postOrange hover:bg-orange-600";
-                submitBtn.innerText = isEditing ? "Save Entry Changes" : "Register Postage Outflow";
-            } else if(targetTab === 'return') {
-                title.innerText = isEditing ? "Modify Return Entry" : "Add Return Entry";
-                submitBtn.className = "w-full py-3 rounded-xl font-semibold text-white mt-2 bg-returnPurple hover:bg-purple-600";
-                submitBtn.innerText = isEditing ? "Save Entry Changes" : "Register Returned Item";
+            tStock.className = "py-2 rounded-lg font-medium text-sm flex justify-center items-center gap-1 text-gray-400";
+            tPost.className = "py-2 rounded-lg font-medium text-sm flex justify-center items-center gap-1 text-gray-400";
+            tRet.className = "py-2 rounded-lg font-medium text-sm flex justify-center items-center gap-1 text-gray-400";
+
+            if(tabName === 'stock') {
+                tStock.className = "py-2 rounded-lg font-bold text-sm bg-cardBg text-stockBlue shadow border border-gray-800/40";
+                document.getElementById('formTitle').innerText = "Add Inbound Stock";
+                btnSubmit.className = "w-full py-3 rounded-xl font-semibold text-white mt-2 bg-stockBlue hover:bg-blue-600 transition shadow-lg shadow-blue-500/10";
+                btnSubmit.innerText = "Post Stock Entry";
+            } else if(tabName === 'postage') {
+                tPost.className = "py-2 rounded-lg font-bold text-sm bg-cardBg text-postOrange shadow border border-gray-800/40";
+                document.getElementById('formTitle').innerText = "Add Outbound Postage";
+                btnSubmit.className = "w-full py-3 rounded-xl font-semibold text-white mt-2 bg-postOrange hover:bg-orange-600 transition shadow-lg shadow-orange-500/10";
+                btnSubmit.innerText = "Post Postage Entry";
+            } else {
+                tRet.className = "py-2 rounded-lg font-bold text-sm bg-cardBg text-returnPurple shadow border border-gray-800/40";
+                document.getElementById('formTitle').innerText = "Add Return Logs";
+                btnSubmit.className = "w-full py-3 rounded-xl font-semibold text-white mt-2 bg-returnPurple hover:bg-purple-600 transition shadow-lg shadow-purple-500/10";
+                btnSubmit.innerText = "Post Return Entry";
             }
-            renderFormFieldsInputs();
-            renderActiveHistoryLogs();
+            buildDynamicFormInputs();
+            renderTabLogsRegistry();
         }
 
-        function renderFormFieldsInputs() {
+        function buildDynamicFormInputs() {
             const container = document.getElementById('formInputsContainer');
-            if(!container) return;
             container.innerHTML = '';
-            
             products.forEach(p => {
-                const itemDiv = document.createElement('div');
-                itemDiv.className = "bg-innerCardBg p-2.5 rounded-xl border border-gray-800 flex flex-col items-center justify-center";
-                itemDiv.innerHTML = `
-                    <label class="block text-[11px] text-gray-400 text-center font-medium truncate mb-1 w-full">${p.label}</label>
-                    <input type="number" id="input-prod-${p.id}" value="0" min="0" class="w-full bg-cardBg text-center rounded-lg p-1.5 text-white focus:outline-none text-sm font-semibold border border-gray-900">
+                container.innerHTML += `
+                    <div class="bg-innerCardBg/60 p-2.5 rounded-xl border border-gray-800/60">
+                        <label class="block text-[11px] text-gray-400 font-medium truncate mb-1">${p.label}</label>
+                        <input type="number" id="input-prod-${p.id}" value="0" min="0" class="w-full bg-innerCardBg text-center rounded-lg p-1.5 text-white focus:outline-none font-bold text-sm border border-gray-800">
+                    </div>
                 `;
-                container.appendChild(itemDiv);
             });
-
-            if(isEditing && editingId !== null) {
-                const entry = database[currentActiveTab].find(i => i.id === editingId);
-                if(entry) {
-                    document.getElementById('formDate').value = entry.date;
-                    products.forEach(p => {
-                        const field = document.getElementById(`input-prod-${p.id}`);
-                        if(field) field.value = entry[p.id] || 0;
-                    });
-                }
-            }
         }
 
         function submitEntry() {
             const dateVal = document.getElementById('formDate').value;
-            const currentOperator = sessionStorage.getItem('ar_username') || 'Operator';
-            if(!dateVal) return alert("Select standard validation execution date.");
+            if(!dateVal) return alert("Valid timestamp requested.");
 
-            let entryPayload = {
-                id: isEditing ? editingId : Date.now(),
-                date: dateVal,
-                user: currentOperator
-            };
-
-            let validationCheckPass = false;
+            let entryObj = { id: isEditing ? editingId : 'ent_' + Date.now(), date: dateVal };
             products.forEach(p => {
-                const val = parseInt(document.getElementById(`input-prod-${p.id}`).value) || 0;
-                entryPayload[p.id] = val;
-                if(val > 0) validationCheckPass = true;
+                entryObj[p.id] = parseInt(document.getElementById(`input-prod-${p.id}`).value) || 0;
             });
 
-            if(!validationCheckPass) return alert("Enter count allocation quantity metrics.");
-
             if(isEditing) {
-                const originalEntry = database[currentActiveTab].find(i => i.id === editingId);
-                if(originalEntry && originalEntry.user) entryPayload.user = originalEntry.user;
-                database[currentActiveTab] = database[currentActiveTab].map(i => i.id === editingId ? entryPayload : i);
-                cancelEditingMode();
+                const idx = database[currentActiveTab].findIndex(x => x.id === editingId);
+                if(idx !== -1) database[currentActiveTab][idx] = entryObj;
             } else {
-                database[currentActiveTab].unshift(entryPayload);
+                database[currentActiveTab].unshift(entryObj);
             }
 
             saveDataToDevice();
+            cancelEditingMode();
             refreshAllAppLayers();
             switchTab(currentActiveTab);
         }
 
-        function renderActiveHistoryLogs() {
+        function renderTabLogsRegistry() {
             const container = document.getElementById('logContainer');
-            if(!container) return;
+            document.getElementById('logTitle').innerText = `${currentActiveTab.toUpperCase()} Log Ledger`;
             container.innerHTML = '';
-            
-            const records = database[currentActiveTab] || [];
-            document.getElementById('logTitle').innerText = `${currentActiveTab.charAt(0).toUpperCase() + currentActiveTab.slice(1)} Entry Records`;
 
-            if(records.length === 0) {
-                container.innerHTML = `<p class="text-xs text-gray-500 italic text-center py-4 bg-cardBg rounded-xl">No transactions found inside database module.</p>`;
+            const logs = database[currentActiveTab] || [];
+            if(logs.length === 0) {
+                container.innerHTML = `<p class="text-center text-xs text-gray-500 py-6 bg-cardBg rounded-xl border border-gray-800/40">No entries recorded inside this ledger array.</p>`;
                 return;
             }
 
-            records.forEach(row => {
-                let textInfoSegments = [];
+            logs.forEach(log => {
+                let itemsListHtml = "";
                 products.forEach(p => {
-                    if(row[p.id] && parseInt(row[p.id]) > 0) {
-                        textInfoSegments.push(`${p.label}: <strong>${row[p.id]}</strong>`);
+                    if(log[p.id] && log[p.id] > 0) {
+                        itemsListHtml += `<span class="bg-innerCardBg border border-gray-800 text-gray-300 rounded-md px-1.5 py-0.5">${p.label}: <strong>${log[p.id]}</strong></span>`;
                     }
                 });
 
-                let badgeColor = 'bg-stockBlue/10 text-stockBlue';
-                if(currentActiveTab === 'postage') badgeColor = 'bg-postOrange/10 text-postOrange';
-                if(currentActiveTab === 'return') badgeColor = 'bg-returnPurple/10 text-returnPurple';
+                if(!itemsListHtml) itemsListHtml = `<span class="text-gray-500 italic">Empty Entry</span>`;
 
-                const loggedUser = row.user || 'System';
-
-                const card = document.createElement('div');
-                card.className = "bg-cardBg p-3.5 rounded-xl border border-gray-800 flex justify-between items-center gap-2 text-xs";
-                card.innerHTML = `
-                    <div class="flex flex-col gap-1 w-full">
-                        <div class="flex items-center justify-between w-full">
-                            <span class="text-[10px] px-2 py-0.5 font-bold rounded-md ${badgeColor}">${row.date}</span>
-                            <span class="text-[10px] text-gray-500 italic font-medium">By: ${loggedUser}</span>
-                        </div>
-                        <div class="text-gray-300 text-[11px] leading-relaxed pt-1">${textInfoSegments.join(' , ')}</div>
+                const entryRow = document.createElement('div');
+                entryRow.className = "bg-cardBg p-3.5 rounded-xl border border-gray-800 flex justify-between items-start gap-4 text-xs shadow-sm";
+                entryRow.innerHTML = `
+                    <div class="flex flex-col gap-1.5 flex-1 min-w-0">
+                        <span class="text-[10px] text-gray-400 font-bold bg-innerCardBg px-2 py-0.5 rounded-md w-max border border-gray-800/60">${log.date}</span>
+                        <div class="flex flex-wrap gap-1">${itemsListHtml}</div>
                     </div>
-                    <div class="flex gap-3 text-gray-400 font-medium shrink-0 pl-2">
-                        <button onclick="triggerEditingSequence(${row.id})" class="hover:text-white">✏️</button>
-                        <button onclick="dropRecordRow(${row.id})" class="hover:text-red-400">🗑️</button>
+                    <div class="flex gap-3 text-sm pt-1 shrink-0">
+                        <button onclick="triggerEntryEditMode('${log.id}')" class="hover:text-white transition">✏️</button>
+                        <button onclick="deleteLedgerRecord('${log.id}')" class="hover:text-red-400 transition">🗑️</button>
                     </div>
                 `;
-                container.appendChild(card);
+                container.appendChild(entryRow);
             });
         }
 
-        function triggerEditingSequence(id) {
+        function triggerEntryEditMode(id) {
             isEditing = true;
             editingId = id;
             document.getElementById('cancelEditBtn').classList.remove('hidden');
-            switchTab(currentActiveTab);
+            document.getElementById('formSubmitBtn').innerText = "Update Ledger Entry";
+            
+            const log = database[currentActiveTab].find(x => x.id === id);
+            if(!log) return;
+
+            document.getElementById('formDate').value = log.date;
+            products.forEach(p => {
+                const element = document.getElementById(`input-prod-${p.id}`);
+                if(element) element.value = log[p.id] || 0;
+            });
         }
 
         function cancelEditingMode() {
             isEditing = false;
             editingId = null;
             document.getElementById('cancelEditBtn').classList.add('hidden');
+            document.getElementById('formSubmitBtn').innerText = "Add Entry";
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('formDate').value = today;
+            products.forEach(p => {
+                const element = document.getElementById(`input-prod-${p.id}`);
+                if(element) element.value = 0;
+            });
             switchTab(currentActiveTab);
         }
 
-        function dropRecordRow(id) {
-            if(confirm("Drop entry line data row permanently?")) {
-                database[currentActiveTab] = database[currentActiveTab].filter(i => i.id !== id);
+        function deleteLedgerRecord(id) {
+            if(confirm("Delete this statement permanently?")) {
+                database[currentActiveTab] = database[currentActiveTab].filter(x => x.id !== id);
                 saveDataToDevice();
                 refreshAllAppLayers();
                 switchTab(currentActiveTab);
             }
         }
 
-        function switchTabToForm(tab) {
-            document.getElementById('stockManagementView').classList.add('hidden');
-            document.getElementById('entryScreen').classList.remove('hidden');
-            switchTab(tab);
-        }
-
         function handleFileSelectedName(input) {
-            const feed = document.getElementById('fileNameFeedback');
+            const labelFeedback = document.getElementById('fileNameFeedback');
             if(input.files && input.files[0]) {
-                feed.innerText = `Selected: "${input.files[0].name}"`;
+                const file = input.files[0];
+                labelFeedback.innerText = `✓ Selected: ${file.name}`;
                 
                 const rdr = new FileReader();
                 rdr.onload = function(e) {
                     base64FileBuffer = e.target.result;
-                }
-                rdr.readAsDataURL(input.files[0]);
+                };
+                rdr.readAsDataURL(file);
             } else {
-                feed.innerText = "";
+                labelFeedback.innerText = "";
                 base64FileBuffer = "";
             }
         }
 
         function addNewLabelToRegistry() {
-            const pSelect = document.getElementById('labelProductSelect');
-            const qtyInput = document.getElementById('labelProductQty');
-            const targetProdId = pSelect.value;
-            const targetProdName = pSelect.options[pSelect.selectedIndex].text;
-            const qtyVal = parseInt(qtyInput.value) || 1;
-            const dateString = document.getElementById('labelFilterDate').value;
-            const currentOperator = sessionStorage.getItem('ar_username') || 'Operator';
+            const pId = document.getElementById('labelProductSelect').value;
+            const qty = parseInt(document.getElementById('labelProductQty').value) || 1;
+            const dateInput = document.getElementById('labelFilterDate').value;
 
-            if(!base64FileBuffer) return alert("Upload valid media document/PDF file standard buffer.");
+            if(!base64FileBuffer) return alert("Please select a valid image/document asset first.");
 
-            let payload = {
-                id: Date.now(),
-                date: dateString,
-                productId: targetProdId,
-                productLabel: targetProdName,
-                qty: qtyVal,
-                fileData: base64FileBuffer,
-                printed: false,
-                user: currentOperator
+            const activeProd = products.find(x => x.id === pId);
+            const labelEntry = {
+                id: 'lbl_' + Date.now(),
+                productId: pId,
+                productLabel: activeProd ? activeProd.label : 'Unknown Item',
+                qty: qty,
+                date: dateInput,
+                fileData: base64FileBuffer
             };
 
-            labelsDatabase.unshift(payload);
+            labelsDatabase.unshift(labelEntry);
+
+            let newPostageObj = { id: 'ent_auto_' + Date.now(), date: dateInput };
+            products.forEach(p => {
+                newPostageObj[p.id] = (p.id === pId) ? qty : 0;
+            });
+            database.postage.unshift(newPostageObj);
+
             saveDataToDevice();
             
-            qtyInput.value = "1";
             document.getElementById('labelFileInput').value = "";
             document.getElementById('fileNameFeedback').innerText = "";
             base64FileBuffer = "";
-            
-            renderLabelsHubTimeline();
+            document.getElementById('labelProductQty').value = "1";
+
+            refreshAllAppLayers();
+            launchDirectPrintJob(labelEntry.id);
         }
 
         function renderLabelsHubTimeline() {
             const container = document.getElementById('labelsTimelineContainer');
-            const filterDate = document.getElementById('labelFilterDate').value;
+            const targetDate = document.getElementById('labelFilterDate').value;
             if(!container) return;
+
             container.innerHTML = '';
+            const filteredLabels = labelsDatabase.filter(l => l.date === targetDate);
 
-            let scopeSet = labelsDatabase.filter(l => l.date === filterDate);
-
-            if(scopeSet.length === 0) {
-                container.innerHTML = `<p class="text-xs text-gray-500 italic text-center py-6 bg-cardBg rounded-xl">No delivery labels uploaded on this calendar date index.</p>`;
+            if(filteredLabels.length === 0) {
+                container.innerHTML = `<p class="text-center text-xs text-gray-500 py-6 bg-cardBg rounded-xl border border-gray-800/40">No printing assignments queued for this date.</p>`;
                 return;
             }
 
-            scopeSet.forEach(label => {
-                const block = document.createElement('div');
-                block.className = `bg-cardBg border p-4 rounded-xl flex items-center justify-between gap-3 text-xs transition ${label.printed ? 'border-gray-900 opacity-60' : 'border-orange-500/30 shadow-md'}`;
-                
-                const labelOwner = label.user || 'System';
-
-                block.innerHTML = `
-                    <div class="flex flex-col gap-1 overflow-hidden w-full">
-                        <div class="flex justify-between items-center w-full">
-                            <span class="font-bold text-gray-200 text-sm truncate">${label.productLabel}</span>
-                            <span class="text-[10px] text-gray-500 italic font-medium">By: ${labelOwner}</span>
-                        </div>
-                        <div class="flex gap-2 items-center text-[11px] text-gray-400 pt-0.5">
-                            <span>Ship Count: <strong class="text-white">${label.qty}</strong></span>
-                            <span>•</span>
-                            <span class="${label.printed ? 'text-gray-500' : 'text-orange-400 font-medium'}">${label.printed ? '✓ Printed Handled' : '🗂️ Active Queue'}</span>
-                        </div>
+            filteredLabels.forEach(lbl => {
+                const card = document.createElement('div');
+                card.className = "bg-cardBg p-3 rounded-xl border border-gray-800 flex justify-between items-center text-xs";
+                card.innerHTML = `
+                    <div class="min-w-0 flex-1">
+                        <h4 class="font-bold text-gray-200 truncate">${lbl.productLabel}</h4>
+                        <p class="text-[10px] text-gray-400 mt-0.5">Quantity: <span class="text-white font-medium">${lbl.qty}</span> &bull; Status: <span class="text-green-400 font-semibold">Ready</span></p>
                     </div>
-                    <div class="flex items-center gap-3 font-medium text-xs shrink-0 pl-1">
-                        <button onclick="openLabelPreviewViewModal(${label.id})" class="bg-blue-600/10 text-blue-400 px-2.5 py-1.5 rounded-lg border border-blue-500/20 hover:bg-blue-600 hover:text-white transition">View</button>
-                        <button onclick="dropLabelRowItem(${label.id})" class="text-gray-500 hover:text-red-400">🗑️</button>
+                    <div class="flex gap-2 shrink-0 ml-2">
+                        <button onclick="revealLabelModalPreview('${lbl.id}')" class="bg-innerCardBg border border-gray-800 text-gray-300 px-3 py-1.5 rounded-lg text-[11px] font-medium hover:bg-gray-800 transition">View</button>
+                        <button onclick="removeLabelJob('${lbl.id}')" class="text-gray-500 hover:text-red-400 transition text-sm px-1">🗑️</button>
                     </div>
                 `;
-                container.appendChild(block);
+                container.appendChild(card);
             });
         }
 
-        function openLabelPreviewViewModal(id) {
-            const item = labelsDatabase.find(l => l.id === id);
-            if(!item) return;
+        function revealLabelModalPreview(id) {
+            const job = labelsDatabase.find(x => x.id === id);
+            if(!job) return;
 
-            const previewZone = document.getElementById('modalPreviewContainer');
-            const footerZone = document.getElementById('modalFooterContainer');
-            previewZone.innerHTML = '';
+            const previewBox = document.getElementById('modalPreviewContainer');
+            const footerBox = document.getElementById('modalFooterContainer');
 
-            if(item.fileData.startsWith('data:application/pdf')) {
-                previewZone.innerHTML = `<embed src="${item.fileData}" type="application/pdf" class="w-full h-[50vh] rounded-lg">`;
-            } else {
-                previewZone.innerHTML = `<img src="${item.fileData}" class="max-w-full max-h-[50vh] object-contain rounded-lg">`;
-            }
-
-            footerZone.innerHTML = `
-                <button onclick="markLabelStateProcessedToggle(${item.id})" class="bg-gray-800 text-gray-300 py-2.5 rounded-xl text-xs font-semibold hover:bg-gray-700 transition">
-                    ${item.printed ? 'Re-queue Label' : 'Mark Printed'}
-                </button>
-                <button onclick="executeLabelProductionPrint(${item.id})" class="bg-orange-500 hover:bg-orange-600 text-white py-2.5 rounded-xl text-xs font-semibold shadow transition">
-                    Print Label
-                </button>
-            `;
-
-            document.getElementById('previewModal').classList.remove('hidden');
-        }
-
-        function closeLabelPreviewModal() {
-            document.getElementById('previewModal').classList.add('hidden');
-        }
-
-        function markLabelStateProcessedToggle(id) {
-            const item = labelsDatabase.find(l => l.id === id);
-            if(item) {
-                item.printed = !item.printed;
-                saveDataToDevice();
-                refreshAllAppLayers();
-                closeLabelPreviewModal();
-            }
-        }
-
-        function executeLabelProductionPrint(id) {
-            const item = labelsDatabase.find(l => l.id === id);
-            if(!item) return;
-
-            const layer = document.getElementById('print-production-layer');
-            layer.innerHTML = '';
-
-            if(item.fileData.startsWith('data:application/pdf')) {
-                layer.innerHTML = `<embed src="${item.fileData}" type="application/pdf" style="width:100vw; height:100vh; position:fixed; top:0; left:0; background:white;">`;
-            } else {
-                layer.innerHTML = `
-                    <div style="width: 100%; max-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: white !important; padding: 0px; margin: 0px; box-sizing: border-box; overflow: hidden;">
-                        <h1 style="font-size: 28px; font-weight: bold; font-family: sans-serif; margin: 10px 0; color: #000000 !important; text-align: center;">${item.productLabel}</h1>
-                        <img src="${item.fileData}" style="max-width: 100%; max-height: 85vh; object-fit: contain; display: block; margin: 0 auto; background: white !important;">
-                    </div>
-                `;
-            }
-
-            item.printed = true;
-            saveDataToDevice();
-            refreshAllAppLayers();
-            closeLabelPreviewModal();
-
-            setTimeout(() => {
-                window.print();
-            }, 300);
-        }
-
-        function dropLabelRowItem(id) {
-            if(confirm("Drop label data reference file object?")) {
-                labelsDatabase = labelsDatabase.filter(l => l.id !== id);
-                saveDataToDevice();
-                refreshAllAppLayers();
-            }
-        }
-
-        function showDashboardView() {
-            document.getElementById('entryScreen').classList.add('hidden');
-            document.getElementById('stockManagementView').classList.remove('hidden');
-            refreshAllAppLayers();
-        }
-    </script>
-</body>
-</html>
+            if(job.fileData.startsWith('data:application/pdf')) {
+                previewBox.innerHTML = `<embed src="${job.fileData}" type="application/pdf" class="w-full h-[45vh] rounded-lg
