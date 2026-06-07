@@ -862,6 +862,12 @@
             const lbl = labelsDatabase.find(l => l.id === id);
             if(!lbl) return;
 
+            const availableStock = getItemLeftCount(lbl.productId);
+            if (availableStock < lbl.qty) {
+                alert(`Not enough stock.\n\nAvailable: ${availableStock}\nRequested: ${lbl.qty}`);
+                return;
+            }
+
             const modal = document.getElementById('previewModal');
             const previewContainer = document.getElementById('modalPreviewContainer');
             const footerContainer = document.getElementById('modalFooterContainer');
@@ -890,11 +896,21 @@
             }
 
             footerContainer.innerHTML = `
-                <button onclick="closeLabelPreviewModal()" class="bg-gray-800 text-gray-300 py-2.5 rounded-xl font-semibold hover:bg-gray-700 transition text-xs">Dismiss</button>
+                <button onclick="markLabelAsPrinted('${lbl.id}')" class="bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-xl font-semibold transition text-xs">Mark as Print</button>
                 <button onclick="commitLabelToHardwarePrinterDevice('${lbl.id}')" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2.5 rounded-xl transition text-xs shadow-md">Execute Print Out</button>
             `;
 
             modal.classList.remove('hidden');
+        }
+
+        window.markLabelAsPrinted = function(id) {
+            const lbl = labelsDatabase.find(l => l.id === id);
+            if(!lbl) return;
+
+            lbl.printed = true;
+            saveDataToDevice();
+            closeLabelPreviewModal();
+            renderLabelsHubTimeline();
         }
 
         function closeLabelPreviewModal() {
