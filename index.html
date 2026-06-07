@@ -78,18 +78,6 @@
                 margin: 0mm;
             }
         }
-
-        /* Elegant custom scrollbar for the product list container panel */
-        .custom-scroll::-webkit-scrollbar {
-            width: 5px;
-        }
-        .custom-scroll::-webkit-scrollbar-track {
-            background: #161c33;
-        }
-        .custom-scroll::-webkit-scrollbar-thumb {
-            background: #0b0f1c;
-            border-radius: 10px;
-        }
     </style>
 </head>
 <body class="bg-darkBg text-white font-sans min-h-screen p-4 flex flex-col items-center justify-start relative">
@@ -138,7 +126,7 @@
                     <button id="viewToggleBtn" onclick="toggleGlobalView()" class="bg-blue-600 text-[11px] px-2.5 py-2 rounded-xl font-semibold shadow hover:bg-blue-700 transition">
                         Go to Label Hub
                     </button>
-                    <button onclick="logoutSecurely()" class="bg-gray-800 hover:bg-gray-700 text-gray-400 p-2 rounded-xl text-xs" title="Logout">
+                    <button onclick="logoutSecurely()" class="bg-gray-880 hover:bg-gray-700 text-gray-400 p-2 rounded-xl text-xs" title="Logout">
                         ✕
                     </button>
                 </div>
@@ -157,23 +145,29 @@
         <div id="coreDashboardModuleBlock" class="flex flex-col gap-6">
             <div id="stockManagementView" class="flex flex-col gap-6">
                 
-                <div class="bg-cardBg rounded-2xl border border-gray-800/60 shadow-lg p-4 flex flex-col gap-3">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2 text-sm font-semibold text-gray-300">
+                <div class="bg-cardBg rounded-2xl border border-gray-800/60 shadow-lg overflow-hidden transition-all duration-200">
+                    <button onclick="toggleProductDropdownMenu()" class="w-full flex items-center justify-between p-4 bg-cardBg text-sm font-semibold text-gray-300 hover:bg-innerCardBg/40 transition focus:outline-none">
+                        <div class="flex items-center gap-2">
                             <span>⚙️</span>
                             <span>Product Profiles Configuration</span>
                         </div>
-                        <span id="productProfileCountBadge" class="bg-innerCardBg text-stockBlue text-[11px] px-2 py-0.5 rounded-md border border-gray-800 font-medium">0 Items</span>
-                    </div>
+                        <div class="flex items-center gap-2.5">
+                            <span id="productProfileCountBadge" class="bg-innerCardBg text-stockBlue text-[11px] px-2 py-0.5 rounded-md border border-gray-800">0 Items</span>
+                            <svg id="productDropdownArrowIcon" class="w-4 h-4 transform transition-transform duration-200 text-gray-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                <path d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+                    </button>
                     
-                    <div class="flex justify-between items-center border-t border-gray-800/40 pt-2.5">
-                        <span class="text-xs text-gray-400 font-medium">Manage active variant fields:</span>
-                        <button onclick="createNewProduct()" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-sm">
-                            <span>+</span> Add New
-                        </button>
+                    <div id="collapsibleProductContentBlock" class="hidden border-t border-gray-800/80 bg-innerCardBg/40 p-4 flex flex-col gap-3">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-xs text-gray-400 font-medium">Manage active variant fields:</span>
+                            <button onclick="createNewProduct()" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-sm">
+                                <span>+</span> Add New
+                            </button>
+                        </div>
+                        <div id="productsContainer" class="flex flex-col gap-2 max-h-[190px] overflow-y-auto pr-1"></div>
                     </div>
-
-                    <div id="productsContainer" class="flex flex-col gap-2 max-h-[190px] overflow-y-auto pr-1 custom-scroll"></div>
                 </div>
 
                 <div class="bg-cardBg rounded-2xl p-4 shadow-lg">
@@ -218,7 +212,7 @@
                 </div>
 
                 <button onclick="showDashboardView()" id="backBtn" class="w-full bg-gray-800 py-3 rounded-xl font-semibold tracking-wide text-gray-300">
-                    ← Back to Stock Matrix
+                    &larr; Back to Stock Matrix
                 </button>
             </div>
 
@@ -263,7 +257,7 @@
                 <div class="flex justify-between items-center">
                     <h2 class="text-xl font-bold tracking-wide text-gray-100">Audit Reports Engine</h2>
                     <button onclick="printFilteredReportLayout()" class="bg-gray-800 text-xs px-3 py-1.5 rounded-lg border border-gray-700 hover:bg-gray-700 transition">
-                        🖨️ Export PDF
+                        &#128438; Export PDF
                     </button>
                 </div>
 
@@ -336,6 +330,7 @@
         let activeGlobalScreen = 'stock-view'; 
         let base64FileBuffer = ""; 
         let currentActiveModule = 'dashboard';
+        let isProductMenuOpen = false;
 
         window.onload = function() {
             const today = new Date().toISOString().split('T')[0];
@@ -375,6 +370,7 @@
                 errorFdbk.innerText = "⚠️ Invalid passcode entered.";
                 errorFdbk.classList.remove('hidden');
                 document.getElementById('sysPasswordInput').value = "";
+                document.getElementById('sysUsernameInput').value = "";
             }
         }
 
@@ -385,6 +381,20 @@
             document.getElementById('loginScreenView').classList.remove('hidden');
             document.getElementById('sysPasswordInput').value = "";
             document.getElementById('sysUsernameInput').value = "";
+        }
+
+        function toggleProductDropdownMenu() {
+            isProductMenuOpen = !isProductMenuOpen;
+            const block = document.getElementById('collapsibleProductContentBlock');
+            const arrow = document.getElementById('productDropdownArrowIcon');
+            
+            if(isProductMenuOpen) {
+                block.classList.remove('hidden');
+                arrow.classList.add('rotate-180');
+            } else {
+                block.classList.add('hidden');
+                arrow.classList.remove('rotate-180');
+            }
         }
 
         function saveDataToDevice() {
@@ -556,215 +566,226 @@
             
             if(mode === 'all') {
                 wrapper.classList.add('hidden');
-            } else {
+            } else if(mode === 'month') {
                 wrapper.classList.remove('hidden');
-                if(mode === 'month') {
-                    label.innerText = "Select Target Month";
-                    input.type = "month";
-                } else {
-                    label.innerText = "Select Target Day";
-                    input.type = "date";
-                }
+                label.innerText = "Select Calendar Month Target";
+                input.type = "month";
+            } else if(mode === 'day') {
+                wrapper.classList.remove('hidden');
+                label.innerText = "Select Specific Audit Day";
+                input.type = "date";
             }
             generateCalculatedComprehensiveReport();
         }
 
-        function switchTabToForm(tabName) {
+        function switchTabToForm(targetTab) {
             document.getElementById('stockManagementView').classList.add('hidden');
             document.getElementById('entryScreen').classList.remove('hidden');
-            switchTab(tabName);
+            switchTab(targetTab);
         }
 
         function showDashboardView() {
             document.getElementById('entryScreen').classList.add('hidden');
             document.getElementById('stockManagementView').classList.remove('hidden');
             cancelEditingMode();
+            calculateStockMatrix();
         }
 
         function switchTab(tabName) {
             currentActiveTab = tabName;
-            const tStock = document.getElementById('tab-stock');
-            const tPost = document.getElementById('tab-postage');
-            const tRet = document.getElementById('tab-return');
-            const btnSubmit = document.getElementById('formSubmitBtn');
+            const tabs = ['stock', 'postage', 'return'];
+            tabs.forEach(t => {
+                const el = document.getElementById(`tab-${t}`);
+                if(t === tabName) {
+                    el.className = "py-2 rounded-lg font-bold text-sm bg-cardBg border border-gray-800 text-white shadow-sm flex justify-center items-center gap-1 w-full";
+                } else {
+                    el.className = "py-2 rounded-lg font-medium text-sm text-gray-400 hover:text-gray-200 flex justify-center items-center gap-1 w-full";
+                }
+            });
 
-            tStock.className = "py-2 rounded-lg font-medium text-sm flex justify-center items-center gap-1 text-gray-400";
-            tPost.className = "py-2 rounded-lg font-medium text-sm flex justify-center items-center gap-1 text-gray-400";
-            tRet.className = "py-2 rounded-lg font-medium text-sm flex justify-center items-center gap-1 text-gray-400";
+            const titleMap = { 'stock': 'Add Stock Entry', 'postage': 'Add Postage Entry', 'return': 'Add Return Entry' };
+            document.getElementById('formTitle').innerText = isEditing ? "Modify Log Entry" : titleMap[tabName];
+            document.getElementById('formSubmitBtn').innerText = isEditing ? "Save Updated Parameter Changes" : "Confirm Entry Register";
+            
+            if(tabName === 'stock') document.getElementById('formSubmitBtn').className = "w-full py-3 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 transition shadow";
+            if(tabName === 'postage') document.getElementById('formSubmitBtn').className = "w-full py-3 rounded-xl font-bold text-white bg-orange-500 hover:bg-orange-600 transition shadow";
+            if(tabName === 'return') document.getElementById('formSubmitBtn').className = "w-full py-3 rounded-xl font-bold text-white bg-purple-600 hover:bg-purple-700 transition shadow";
 
-            if(tabName === 'stock') {
-                tStock.className = "py-2 rounded-lg font-bold text-sm bg-cardBg text-stockBlue shadow border border-gray-800/40";
-                document.getElementById('formTitle').innerText = "Add Inbound Stock";
-                btnSubmit.className = "w-full py-3 rounded-xl font-semibold text-white mt-2 bg-stockBlue hover:bg-blue-600 transition shadow-lg shadow-blue-500/10";
-                btnSubmit.innerText = "Post Stock Entry";
-            } else if(tabName === 'postage') {
-                tPost.className = "py-2 rounded-lg font-bold text-sm bg-cardBg text-postOrange shadow border border-gray-800/40";
-                document.getElementById('formTitle').innerText = "Add Outbound Postage";
-                btnSubmit.className = "w-full py-3 rounded-xl font-semibold text-white mt-2 bg-postOrange hover:bg-orange-600 transition shadow-lg shadow-orange-500/10";
-                btnSubmit.innerText = "Post Postage Entry";
-            } else {
-                tRet.className = "py-2 rounded-lg font-bold text-sm bg-cardBg text-returnPurple shadow border border-gray-800/40";
-                document.getElementById('formTitle').innerText = "Add Return Logs";
-                btnSubmit.className = "w-full py-3 rounded-xl font-semibold text-white mt-2 bg-returnPurple hover:bg-purple-600 transition shadow-lg shadow-purple-500/10";
-                btnSubmit.innerText = "Post Return Entry";
-            }
-            buildDynamicFormInputs();
-            renderTabLogsRegistry();
+            buildFormInputFields();
+            renderActiveTabLedgerLogs();
         }
 
-        function buildDynamicFormInputs() {
+        function buildFormInputFields() {
             const container = document.getElementById('formInputsContainer');
+            if(!container) return;
             container.innerHTML = '';
+            
             products.forEach(p => {
                 container.innerHTML += `
-                    <div class="bg-innerCardBg/60 p-2.5 rounded-xl border border-gray-800/60">
-                        <label class="block text-[11px] text-gray-400 font-medium truncate mb-1">${p.label}</label>
-                        <input type="number" id="input-prod-${p.id}" value="0" min="0" class="w-full bg-innerCardBg text-center rounded-lg p-1.5 text-white focus:outline-none font-bold text-sm border border-gray-800">
+                    <div class="bg-innerCardBg/40 p-2.5 rounded-xl border border-gray-800/50 flex flex-col gap-1">
+                        <label class="text-[11px] text-gray-400 truncate font-medium block">${p.label}</label>
+                        <input type="number" id="input-prod-${p.id}" value="0" min="0" class="w-full bg-innerCardBg border border-gray-800 rounded-lg p-2 text-center text-sm font-semibold text-white focus:outline-none">
                     </div>
                 `;
             });
         }
 
         function submitEntry() {
-            const dateVal = document.getElementById('formDate').value;
-            if(!dateVal) return alert("Valid timestamp requested.");
+            const targetDate = document.getElementById('formDate').value;
+            if(!targetDate) return alert("Valid calendar reference date mandatory.");
 
-            let entryObj = { id: isEditing ? editingId : 'ent_' + Date.now(), date: dateVal };
+            let entryPayload = {
+                id: isEditing ? editingId : 'log_' + Date.now() + Math.random().toString(36).substr(2, 4),
+                date: targetDate,
+                operator: sessionStorage.getItem('ar_username') || 'Operator'
+            };
+
             products.forEach(p => {
-                entryObj[p.id] = parseInt(document.getElementById(`input-prod-${p.id}`).value) || 0;
+                const val = parseInt(document.getElementById(`input-prod-${p.id}`).value) || 0;
+                entryPayload[p.id] = val;
             });
 
             if(isEditing) {
-                const idx = database[currentActiveTab].findIndex(x => x.id === editingId);
-                if(idx !== -1) database[currentActiveTab][idx] = entryObj;
+                const idx = database[currentActiveTab].findIndex(item => item.id === editingId);
+                if(idx !== -1) entryPayload.operator = database[currentActiveTab][idx].operator; 
+                if(idx !== -1) database[currentActiveTab][idx] = entryPayload;
+                isEditing = false;
+                editingId = null;
+                document.getElementById('cancelEditBtn').classList.add('hidden');
             } else {
-                database[currentActiveTab].unshift(entryObj);
+                database[currentActiveTab].unshift(entryPayload);
             }
 
             saveDataToDevice();
-            cancelEditingMode();
-            refreshAllAppLayers();
             switchTab(currentActiveTab);
+            calculateStockMatrix();
         }
 
-        function renderTabLogsRegistry() {
-            const container = document.getElementById('logContainer');
-            document.getElementById('logTitle').innerText = `${currentActiveTab.toUpperCase()} Log Ledger`;
-            container.innerHTML = '';
+        function startEditingLogEntry(id) {
+            const item = database[currentActiveTab].find(i => i.id === id);
+            if(!item) return;
 
-            const logs = database[currentActiveTab] || [];
-            if(logs.length === 0) {
-                container.innerHTML = `<p class="text-center text-xs text-gray-500 py-6 bg-cardBg rounded-xl border border-gray-800/40">No entries recorded inside this ledger array.</p>`;
-                return;
-            }
-
-            logs.forEach(log => {
-                let itemsListHtml = "";
-                products.forEach(p => {
-                    if(log[p.id] && log[p.id] > 0) {
-                        itemsListHtml += `<span class="bg-innerCardBg border border-gray-800 text-gray-300 rounded-md px-1.5 py-0.5">${p.label}: <strong>${log[p.id]}</strong></span>`;
-                    }
-                });
-
-                if(!itemsListHtml) itemsListHtml = `<span class="text-gray-500 italic">Empty Entry</span>`;
-
-                const entryRow = document.createElement('div');
-                entryRow.className = "bg-cardBg p-3.5 rounded-xl border border-gray-800 flex justify-between items-start gap-4 text-xs shadow-sm";
-                entryRow.innerHTML = `
-                    <div class="flex flex-col gap-1.5 flex-1 min-w-0">
-                        <span class="text-[10px] text-gray-400 font-bold bg-innerCardBg px-2 py-0.5 rounded-md w-max border border-gray-800/60">${log.date}</span>
-                        <div class="flex flex-wrap gap-1">${itemsListHtml}</div>
-                    </div>
-                    <div class="flex gap-3 text-sm pt-1 shrink-0">
-                        <button onclick="triggerEntryEditMode('${log.id}')" class="hover:text-white transition">✏️</button>
-                        <button onclick="deleteLedgerRecord('${log.id}')" class="hover:text-red-400 transition">🗑️</button>
-                    </div>
-                `;
-                container.appendChild(entryRow);
-            });
-        }
-
-        function triggerEntryEditMode(id) {
             isEditing = true;
             editingId = id;
-            document.getElementById('cancelEditBtn').classList.remove('hidden');
-            document.getElementById('formSubmitBtn').innerText = "Update Ledger Entry";
             
-            const log = database[currentActiveTab].find(x => x.id === id);
-            if(!log) return;
+            document.getElementById('formDate').value = item.date;
+            document.getElementById('cancelEditBtn').classList.remove('hidden');
+            
+            document.getElementById('formTitle').innerText = "Modify Log Entry";
+            document.getElementById('formSubmitBtn').innerText = "Save Updated Parameter Changes";
 
-            document.getElementById('formDate').value = log.date;
             products.forEach(p => {
-                const element = document.getElementById(`input-prod-${p.id}`);
-                if(element) element.value = log[p.id] || 0;
+                const inputField = document.getElementById(`input-prod-${p.id}`);
+                if(inputField) inputField.value = item[p.id] || 0;
             });
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function cancelEditingMode() {
             isEditing = false;
             editingId = null;
             document.getElementById('cancelEditBtn').classList.add('hidden');
-            document.getElementById('formSubmitBtn').innerText = "Add Entry";
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('formDate').value = today;
-            products.forEach(p => {
-                const element = document.getElementById(`input-prod-${p.id}`);
-                if(element) element.value = 0;
-            });
             switchTab(currentActiveTab);
         }
 
-        function deleteLedgerRecord(id) {
-            if(confirm("Delete this statement permanently?")) {
-                database[currentActiveTab] = database[currentActiveTab].filter(x => x.id !== id);
+        function removeLogEntryComplete(id) {
+            if(confirm("Permanently purge record from registry memory?")) {
+                database[currentActiveTab] = database[currentActiveTab].filter(i => i.id !== id);
                 saveDataToDevice();
-                refreshAllAppLayers();
                 switchTab(currentActiveTab);
+                calculateStockMatrix();
             }
         }
 
-        function handleFileSelectedName(input) {
-            const labelFeedback = document.getElementById('fileNameFeedback');
-            if(input.files && input.files[0]) {
-                const file = input.files[0];
-                labelFeedback.innerText = `✓ Selected: ${file.name}`;
+        function renderActiveTabLedgerLogs() {
+            const container = document.getElementById('logContainer');
+            const labelTitle = document.getElementById('logTitle');
+            if(!container) return;
+            container.innerHTML = '';
+
+            const activeDataset = database[currentActiveTab] || [];
+            const labelsMap = { 'stock': 'Incoming Stock Register', 'postage': 'Dispatched Outbound Ledger', 'return': 'Customer Returns Catalog' };
+            labelTitle.innerText = labelsMap[currentActiveTab] || 'Logs';
+
+            if(activeDataset.length === 0) {
+                container.innerHTML = `<p class="text-center text-xs text-gray-500 py-6 italic bg-cardBg rounded-xl border border-dashed border-gray-800">No ledger reports found in tab view context</p>`;
+                return;
+            }
+
+            activeDataset.forEach(item => {
+                let breakupStringList = [];
+                products.forEach(p => {
+                    const qty = item[p.id] || 0;
+                    if(qty > 0) {
+                        breakupStringList.push(`<span class="text-gray-300 font-medium">${p.label}:</span> <strong class="text-white">${qty}</strong>`);
+                    }
+                });
+
+                if(breakupStringList.length === 0) breakupStringList.push('<span class="text-gray-500 italic">No quantities specified</span>');
+
+                const card = document.createElement('div');
+                card.className = "bg-cardBg rounded-xl p-3.5 border border-gray-800/60 flex flex-col gap-2.5 shadow-sm text-xs";
+                card.innerHTML = `
+                    <div class="flex justify-between items-center border-b border-gray-800/50 pb-1.5">
+                        <div class="flex flex-col">
+                            <span class="font-bold text-gray-200 text-sm">${formatReadableSystemDate(item.date)}</span>
+                            <span class="text-[10px] text-gray-500">Logged by: ${item.operator || 'System'}</span>
+                        </div>
+                        <div class="flex gap-3 text-xs text-gray-400">
+                            <button onclick="startEditingLogEntry('${item.id}')" class="hover:text-white transition">✏️ Edit</button>
+                            <button onclick="removeLogEntryComplete('${item.id}')" class="hover:text-red-400 transition">🗑️ Delete</button>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs">
+                        ${breakupStringList.join(', ')}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function handleFileSelectedName(inputElement) {
+            const feedback = document.getElementById('fileNameFeedback');
+            if(inputElement.files && inputElement.files[0]) {
+                const fileObj = inputElement.files[0];
+                feedback.innerText = `📄 ${fileObj.name}`;
                 
-                const rdr = new FileReader();
-                rdr.onload = function(e) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
                     base64FileBuffer = e.target.result;
                 };
-                rdr.readAsDataURL(file);
+                reader.readAsDataURL(fileObj);
             } else {
-                labelFeedback.innerText = "";
+                feedback.innerText = "";
                 base64FileBuffer = "";
             }
         }
 
         function addNewLabelToRegistry() {
-            const pId = document.getElementById('labelProductSelect').value;
-            const qty = parseInt(document.getElementById('labelProductQty').value) || 1;
-            const dateInput = document.getElementById('labelFilterDate').value;
+            const targetProdId = document.getElementById('labelProductSelect').value;
+            const targetQty = parseInt(document.getElementById('labelProductQty').value) || 1;
+            const targetDate = document.getElementById('labelFilterDate').value;
 
-            if(!base64FileBuffer) return alert("Please select a valid image/document asset first.");
+            if(!targetProdId) return alert("Select product allocation first.");
+            if(targetQty < 1) return alert("Quantity must be greater than zero.");
+            if(!targetDate) return alert("Target transaction schedule logging date required.");
 
-            const activeProd = products.find(x => x.id === pId);
-            const labelEntry = {
+            const matchedProduct = products.find(p => p.id === targetProdId);
+            const variantTitle = matchedProduct ? matchedProduct.label : "Unknown Item";
+
+            let payloadLabel = {
                 id: 'lbl_' + Date.now(),
-                productId: pId,
-                productLabel: activeProd ? activeProd.label : 'Unknown Item',
-                qty: qty,
-                date: dateInput,
-                fileData: base64FileBuffer
+                productId: targetProdId,
+                productLabel: variantTitle,
+                qty: targetQty,
+                date: targetDate,
+                fileData: base64FileBuffer || "",
+                printed: false,
+                operator: sessionStorage.getItem('ar_username') || 'Operator'
             };
 
-            labelsDatabase.unshift(labelEntry);
-
-            let newPostageObj = { id: 'ent_auto_' + Date.now(), date: dateInput };
-            products.forEach(p => {
-                newPostageObj[p.id] = (p.id === pId) ? qty : 0;
-            });
-            database.postage.unshift(newPostageObj);
-
+            labelsDatabase.unshift(payloadLabel);
             saveDataToDevice();
             
             document.getElementById('labelFileInput').value = "";
@@ -772,46 +793,367 @@
             base64FileBuffer = "";
             document.getElementById('labelProductQty').value = "1";
 
-            refreshAllAppLayers();
-            launchDirectPrintJob(labelEntry.id);
+            renderLabelsHubTimeline();
         }
 
         function renderLabelsHubTimeline() {
             const container = document.getElementById('labelsTimelineContainer');
-            const targetDate = document.getElementById('labelFilterDate').value;
+            const targetFilterDate = document.getElementById('labelFilterDate').value;
             if(!container) return;
-
             container.innerHTML = '';
-            const filteredLabels = labelsDatabase.filter(l => l.date === targetDate);
 
-            if(filteredLabels.length === 0) {
-                container.innerHTML = `<p class="text-center text-xs text-gray-500 py-6 bg-cardBg rounded-xl border border-gray-800/40">No printing assignments queued for this date.</p>`;
+            let filteredList = labelsDatabase;
+            if(targetFilterDate) {
+                filteredList = labelsDatabase.filter(l => l.date === targetFilterDate);
+            }
+
+            if(filteredList.length === 0) {
+                container.innerHTML = `<p class="text-center text-xs text-gray-500 py-8 italic bg-cardBg rounded-2xl border border-dashed border-gray-800">No dispatch label transactions reported for chosen date</p>`;
                 return;
             }
 
-            filteredLabels.forEach(lbl => {
+            filteredList.forEach(lbl => {
                 const card = document.createElement('div');
-                card.className = "bg-cardBg p-3 rounded-xl border border-gray-800 flex justify-between items-center text-xs";
+                card.className = `bg-cardBg rounded-xl p-3.5 border ${lbl.printed ? 'border-gray-800/40 opacity-75' : 'border-orange-500/30'} flex flex-col gap-2 shadow-sm text-xs`;
+                
+                const statusBadge = lbl.printed 
+                    ? `<span class="bg-gray-800 text-gray-400 text-[10px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider">Processed</span>`
+                    : `<span class="bg-orange-500/10 text-orange-400 text-[10px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider">In Print Queue</span>`;
+
+                const fileIndicatorIcon = lbl.fileData 
+                    ? `<span class="text-green-400 font-medium" title="Document attached">📎 Doc Included</span>`
+                    : `<span class="text-gray-500 italic">No Doc Attached</span>`;
+
                 card.innerHTML = `
-                    <div class="min-w-0 flex-1">
-                        <h4 class="font-bold text-gray-200 truncate">${lbl.productLabel}</h4>
-                        <p class="text-[10px] text-gray-400 mt-0.5">Quantity: <span class="text-white font-medium">${lbl.qty}</span> &bull; Status: <span class="text-green-400 font-semibold">Ready</span></p>
+                    <div class="flex justify-between items-start border-b border-gray-800/50 pb-2">
+                        <div class="flex flex-col gap-0.5">
+                            <strong class="text-sm text-white font-bold">${lbl.productLabel}</strong>
+                            <div class="flex items-center gap-2 mt-0.5">
+                                <span class="text-gray-400">Qty Dispatch: <strong class="text-orange-400 text-sm">${lbl.qty}</strong></span>
+                                <span class="text-gray-600">|</span>
+                                ${fileIndicatorIcon}
+                            </div>
+                        </div>
+                        <div class="flex flex-col items-end gap-1.5 shrink-0 pl-2">
+                            ${statusBadge}
+                            <span class="text-[9px] text-gray-500">${lbl.operator || 'Operator'}</span>
+                        </div>
                     </div>
-                    <div class="flex gap-2 shrink-0 ml-2">
-                        <button onclick="revealLabelModalPreview('${lbl.id}')" class="bg-innerCardBg border border-gray-800 text-gray-300 px-3 py-1.5 rounded-lg text-[11px] font-medium hover:bg-gray-800 transition">View</button>
-                        <button onclick="removeLabelJob('${lbl.id}')" class="text-gray-500 hover:text-red-400 transition text-sm px-1">🗑️</button>
+                    <div class="flex justify-between items-center pt-1">
+                        <button onclick="purgeLabelRecordTransaction('${lbl.id}')" class="text-gray-500 hover:text-red-400 transition text-[11px]">Drop</button>
+                        <button onclick="triggerLabelExecutionPreviewFlow('${lbl.id}')" class="bg-blue-600 hover:bg-blue-700 font-semibold px-4 py-1.5 rounded-lg shadow-md text-white transition text-[11px]">
+                            Launch Print Preview
+                        </button>
                     </div>
                 `;
                 container.appendChild(card);
             });
         }
 
-        function revealLabelModalPreview(id) {
-            const job = labelsDatabase.find(x => x.id === id);
-            if(!job) return;
+        function purgeLabelRecordTransaction(id) {
+            if(confirm("Remove label transaction completely from ledger history?")) {
+                labelsDatabase = labelsDatabase.filter(l => l.id !== id);
+                saveDataToDevice();
+                renderLabelsHubTimeline();
+            }
+        }
 
-            const previewBox = document.getElementById('modalPreviewContainer');
-            const footerBox = document.getElementById('modalFooterContainer');
+        function triggerLabelExecutionPreviewFlow(id) {
+            const lbl = labelsDatabase.find(l => l.id === id);
+            if(!lbl) return;
 
-            if(job.fileData.startsWith('data:application/pdf')) {
-                previewBox.innerHTML = `<embed src="${job.fileData}" type="application/pdf" class="w-full h-[45vh] rounded-lg
+            const modal = document.getElementById('previewModal');
+            const previewContainer = document.getElementById('modalPreviewContainer');
+            const footerContainer = document.getElementById('modalFooterContainer');
+
+            previewContainer.innerHTML = '';
+            
+            if(lbl.fileData) {
+                if(lbl.fileData.startsWith('data:application/pdf')) {
+                    previewContainer.innerHTML = `
+                        <div class="text-center p-4 w-full">
+                            <p class="text-xs text-gray-700 font-bold mb-2">PDF Document Stream Ready</p>
+                            <object data="${lbl.fileData}" type="application/pdf" class="w-full h-[40vh] border rounded-lg">
+                                <p class="text-xs text-red-500">PDF browser execution preview engine failure.</p>
+                            </object>
+                        </div>`;
+                } else {
+                    previewContainer.innerHTML = `<img src="${lbl.fileData}" class="max-w-full max-h-[45vh] object-contain rounded-lg shadow-sm">`;
+                }
+            } else {
+                previewContainer.innerHTML = `
+                    <div class="text-center p-8 bg-gray-50 rounded-xl border border-dashed border-gray-300 w-full">
+                        <p class="text-4xl mb-2">📦</p>
+                        <p class="text-sm font-bold text-gray-900">${lbl.productLabel}</p>
+                        <p class="text-xs text-gray-500 mt-1">Quantity Manifest: ${lbl.qty} units</p>
+                    </div>`;
+            }
+
+            footerContainer.innerHTML = `
+                <button onclick="closeLabelPreviewModal()" class="bg-gray-800 text-gray-300 py-2.5 rounded-xl font-semibold hover:bg-gray-700 transition text-xs">Dismiss</button>
+                <button onclick="commitLabelToHardwarePrinterDevice('${lbl.id}')" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2.5 rounded-xl transition text-xs shadow-md">Execute Print Out</button>
+            `;
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeLabelPreviewModal() {
+            document.getElementById('previewModal').classList.add('hidden');
+        }
+
+        function commitLabelToHardwarePrinterDevice(id) {
+            const lbl = labelsDatabase.find(l => l.id === id);
+            if(!lbl) return;
+
+            const printLayer = document.getElementById('print-production-layer');
+            printLayer.innerHTML = '';
+
+            let contentElement = document.createElement('div');
+            contentElement.style.width = '100%';
+            contentElement.style.padding = '15mm';
+            contentElement.style.backgroundColor = '#ffffff';
+            contentElement.style.color = '#000000';
+            contentElement.style.fontFamily = 'sans-serif';
+
+            if(lbl.fileData) {
+                if(lbl.fileData.startsWith('data:application/pdf')) {
+                    contentElement.innerHTML = `
+                        <div style="text-align:center;">
+                            <h2 style="margin-bottom:5mm;font-size:18px;">Manifest: ${lbl.productLabel} (Qty: ${lbl.qty})</h2>
+                            <p style="font-size:12px;color:#555;">PDF Print Engine Document Attachment Embedment Below:</p>
+                            <object data="${lbl.fileData}" type="application/pdf" style="width:100%;height:85vh;"></object>
+                        </div>`;
+                } else {
+                    contentElement.innerHTML = `
+                        <div style="text-align:center;width:100%;">
+                            <img src="${lbl.fileData}" style="max-width:100%;max-height:85vh;object-contain:fit;margin-bottom:6mm;">
+                            <h2 style="font-size:22px;margin:0;font-weight:bold;color:#000;">${lbl.productLabel}</h2>
+                            <p style="font-size:16px;margin:2mm 0 0 0;color:#333;">Package Item Manifest Quantity: <strong>${lbl.qty}</strong></p>
+                        </div>`;
+                }
+            } else {
+                contentElement.innerHTML = `
+                    <div style="border:2mm solid #000000;padding:12mm;text-align:center;border-radius:4mm;margin-top:20mm;">
+                        <span style="font-size:64px;display:block;margin-bottom:4mm;">📦</span>
+                        <h1 style="font-size:32px;margin:0 0 4mm 0;font-weight:bold;text-transform:uppercase;letter-spacing:1px;">${lbl.productLabel}</h1>
+                        <hr style="border:0;border-top:1px solid #000000;margin:6mm 0;">
+                        <p style="font-size:20px;margin:0 0 2mm 0;">Outbound Shipping Manifest Quantity</p>
+                        <strong style="font-size:54px;display:block;line-height:1;">${lbl.qty}</strong>
+                        <p style="font-size:12px;margin-top:8mm;color:#555;text-transform:uppercase;">Date: ${formatReadableSystemDate(lbl.date)} | Handler: ${lbl.operator || 'System'}</p>
+                    </div>`;
+            }
+
+            printLayer.appendChild(contentElement);
+
+            lbl.printed = true;
+            
+            const databaseLogMatch = database.postage.find(p => p.date === lbl.date);
+            if(databaseLogMatch) {
+                databaseLogMatch[lbl.productId] = (parseInt(databaseLogMatch[lbl.productId]) || 0) + parseInt(lbl.qty);
+            } else {
+                let newPostageRow = {
+                    id: 'log_' + Date.now(),
+                    date: lbl.date,
+                    operator: lbl.operator || 'System'
+                };
+                products.forEach(p => {
+                    newPostageRow[p.id] = (p.id === lbl.productId) ? parseInt(lbl.qty) : 0;
+                });
+                database.postage.unshift(newPostageRow);
+            }
+
+            saveDataToDevice();
+            closeLabelPreviewModal();
+            refreshAllAppLayers();
+
+            setTimeout(() => {
+                window.print();
+            }, 350);
+        }
+
+        function generateCalculatedComprehensiveReport() {
+            const scopeMode = document.getElementById('reportScopeSelect').value;
+            const targetParamDate = document.getElementById('reportScopeDateInput').value;
+            const totalsDisplay = document.getElementById('reportTotalsOutputDisplay');
+            const tableContainer = document.getElementById('reportBreakdownContainer');
+
+            if(!totalsDisplay || !tableContainer) return;
+            totalsDisplay.innerHTML = '';
+            tableContainer.innerHTML = '';
+
+            let aggregatedPostedUnits = 0;
+            let currentEndingBalances = 0;
+
+            let finalReportTableRowsHtml = "";
+
+            products.forEach(p => {
+                let currentItemTotalDispatched = 0;
+
+                let mergedDateRegistryMap = {};
+
+                database.postage.forEach(entry => {
+                    if(scopeMode === 'month' && entry.date.substring(0, 7) !== targetParamDate) return;
+                    if(scopeMode === 'day' && entry.date !== targetParamDate) return;
+                    
+                    const amount = parseInt(entry[p.id]) || 0;
+                    if(amount > 0) {
+                        mergedDateRegistryMap[entry.date] = (mergedDateRegistryMap[entry.date] || 0) + amount;
+                    }
+                });
+
+                const sortedLoggedDates = Object.keys(mergedDateRegistryMap).sort((a, b) => b.localeCompare(a));
+
+                if(sortedLoggedDates.length > 0) {
+                    sortedLoggedDates.forEach(dDate => {
+                        const amountPosted = mergedDateRegistryMap[dDate];
+                        currentItemTotalDispatched += amountPosted;
+                        
+                        const trackingStockBalanceLeft = getItemLeftCount(p.id, dDate);
+
+                        finalReportTableRowsHtml += `
+                            <tr class="hover:bg-innerCardBg/30 text-gray-300 font-medium border-b border-gray-800/20">
+                                <td class="py-3 px-2 font-bold text-gray-400">${formatReadableSystemDate(dDate)}</td>
+                                <td class="py-3 px-2 text-white font-semibold">${p.label}</td>
+                                <td class="py-3 px-2 text-center text-postOrange font-bold">${amountPosted}</td>
+                                <td class="py-3 px-2 text-right text-leftGreen font-bold">${trackingStockBalanceLeft}</td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    if (scopeMode === 'all') {
+                        const trackingStockBalanceLeft = getItemLeftCount(p.id, null);
+                        finalReportTableRowsHtml += `
+                            <tr class="hover:bg-innerCardBg/30 text-gray-300 font-medium border-b border-gray-800/20">
+                                <td class="py-3 px-2 text-gray-500 italic">Lifetime</td>
+                                <td class="py-3 px-2 text-white font-semibold">${p.label}</td>
+                                <td class="py-3 px-2 text-center text-gray-500">0</td>
+                                <td class="py-3 px-2 text-right text-leftGreen font-bold">${trackingStockBalanceLeft}</td>
+                            </tr>
+                        `;
+                    }
+                }
+
+                aggregatedPostedUnits += currentItemTotalDispatched;
+                currentEndingBalances += getItemLeftCount(p.id, (scopeMode === 'all' ? null : targetParamDate));
+            });
+
+            totalsDisplay.innerHTML = `
+                <div class="bg-cardBg rounded-2xl p-4 border border-gray-800 flex flex-col gap-0.5 shadow-sm">
+                    <span class="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Total Dispatched Units</span>
+                    <strong class="text-2xl font-black text-postOrange tracking-tight">${aggregatedPostedUnits}</strong>
+                </div>
+                <div class="bg-cardBg rounded-2xl p-4 border border-gray-800 flex flex-col gap-0.5 shadow-sm">
+                    <span class="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Ending Balance Matrix</span>
+                    <strong class="text-2xl font-black text-leftGreen tracking-tight">${currentEndingBalances}</strong>
+                </div>
+            `;
+
+            if(finalReportTableRowsHtml === "") {
+                tableContainer.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="text-center text-xs text-gray-500 py-10 italic">No transactional entries match current scope limits</td>
+                    </tr>`;
+            } else {
+                tableContainer.innerHTML = finalReportTableRowsHtml;
+            }
+        }
+
+        function printFilteredReportLayout() {
+            const scopeMode = document.getElementById('reportScopeSelect').value;
+            const targetParamDate = document.getElementById('reportScopeDateInput').value;
+
+            const printLayer = document.getElementById('print-production-layer');
+            printLayer.innerHTML = '';
+
+            let headerLabelText = "Lifetime Accumulated Audit Metrics Summary";
+            if(scopeMode === 'month') headerLabelText = `Calendar Month Summary Report: ${targetParamDate}`;
+            if(scopeMode === 'day') headerLabelText = `Single Day Breakdown Report: ${formatReadableSystemDate(targetParamDate)}`;
+
+            let containerElement = document.createElement('div');
+            containerElement.style.padding = '20mm';
+            containerElement.style.backgroundColor = '#ffffff';
+            containerElement.style.color = '#000000';
+            containerElement.style.fontFamily = 'sans-serif';
+
+            let tableRowsTemplateContent = "";
+            let summaryTotalUnitsPosted = 0;
+
+            products.forEach(p => {
+                let itemDateMappedValues = {};
+                database.postage.forEach(e => {
+                    if(scopeMode === 'month' && e.date.substring(0, 7) !== targetParamDate) return;
+                    if(scopeMode === 'day' && e.date !== targetParamDate) return;
+                    const val = parseInt(e[p.id]) || 0;
+                    if(val > 0) itemDateMappedValues[e.date] = (itemDateMappedValues[e.date] || 0) + val;
+                });
+
+                const sortedDates = Object.keys(itemDateMappedValues).sort((a,b)=>b.localeCompare(a));
+                if(sortedDates.length > 0) {
+                    sortedDates.forEach(dt => {
+                        const postedAmt = itemDateMappedValues[dt];
+                        summaryTotalUnitsPosted += postedAmt;
+                        const leftAmt = getItemLeftCount(p.id, dt);
+                        tableRowsTemplateContent += `
+                            <tr style="border-b: 1px solid #ddd; font-size: 13px;">
+                                <td style="padding: 8px; text-align: left;">${formatReadableSystemDate(dt)}</td>
+                                <td style="padding: 8px; text-align: left; font-weight: bold;">${p.label}</td>
+                                <td style="padding: 8px; text-align: center;">${postedAmt}</td>
+                                <td style="padding: 8px; text-align: right; font-weight: bold;">${leftAmt}</td>
+                            </tr>`;
+                    });
+                } else if(scopeMode === 'all') {
+                    const finalLeftValue = getItemLeftCount(p.id, null);
+                    tableRowsTemplateContent += `
+                        <tr style="border-b: 1px solid #ddd; font-size: 13px;">
+                            <td style="padding: 8px; text-align: left; color:#777;">Lifetime</td>
+                            <td style="padding: 8px; text-align: left; font-weight: bold;">${p.label}</td>
+                            <td style="padding: 8px; text-align: center;">0</td>
+                            <td style="padding: 8px; text-align: right; font-weight: bold;">${finalLeftValue}</td>
+                        </tr>`;
+                }
+            });
+
+            if(tableRowsTemplateContent === "") {
+                tableRowsTemplateContent = `<tr><td colspan="4" style="text-align:center; padding:20px; color:#999; font-style:italic;">No logged movements matched reporting rules parameters</td></tr>`;
+            }
+
+            containerElement.innerHTML = `
+                <div style="border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 20px;">
+                    <h1 style="font-size: 24px; margin: 0; font-weight: bold; text-transform: uppercase;">AR Stock Management Audit</h1>
+                    <p style="font-size: 14px; margin: 5px 0 0 0; color: #444;">${headerLabelText}</p>
+                    <p style="font-size: 11px; margin: 2px 0 0 0; color: #777;">Report compiled on: ${new Date().toLocaleDateString()} | Terminal Operator: ${sessionStorage.getItem('ar_username') || 'System'}</p>
+                </div>
+                
+                <div style="margin-bottom: 25px; background: #f9f9f9; padding: 15px; border-radius: 5px; font-size: 14px;">
+                    <strong>Executive Metrics Summary Panel:</strong><br>
+                    Accumulated Dispatched Logistics Flow Volume: <strong>${summaryTotalUnitsPosted} units</strong>
+                </div>
+
+                <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                    <thead>
+                        <tr style="background-color: #f0f0f0; border-bottom: 2px solid #ccc;">
+                            <th style="padding: 10px; text-align: left;">Transaction Date</th>
+                            <th style="padding: 10px; text-align: left;">Item Nomenclature Title</th>
+                            <th style="padding: 10px; text-align: center;">Units Shipped</th>
+                            <th style="padding: 10px; text-align: right;">Inventory On-Hand Left</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tableRowsTemplateContent}
+                    </tbody>
+                </table>
+            `;
+
+            printLayer.appendChild(containerElement);
+            setTimeout(() => { window.print(); }, 350);
+        }
+
+        function formatReadableSystemDate(dateString) {
+            if(!dateString) return "";
+            const components = dateString.split('-');
+            if(components.length !== 3) return dateString;
+            return `${components[2]}/${components[1]}/${components[0]}`;
+        }
+    </script>
+</body>
+</html>
